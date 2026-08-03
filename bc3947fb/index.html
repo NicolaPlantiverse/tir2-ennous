@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TIR · Ennous</title>
+<style>
+:root{
+  --bg:#06080a; --bg2:#0a0d11; --panel:rgba(255,255,255,.035); --panel2:rgba(255,255,255,.06);
+  --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.16);
+  --txt:#eef1ee; --txt2:#9aa6a0; --txt3:#5a655f;
+  --forest:#3fae6a; --gold:#c9a23f; --cyan:#4cc3d9; --violet:#9b7fd4; --red:#d46a5a; --amber:#d4a843;
+  --radius:18px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Inter,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:rgba(63,174,106,.28)}
+.mono{font-family:"SF Mono",ui-monospace,Menlo,monospace}
+.bgfx{position:fixed;inset:0;pointer-events:none;z-index:0}
+.bgfx::before{content:"";position:absolute;inset:0;background:
+  radial-gradient(1000px 680px at 82% -10%, rgba(63,174,106,.07), transparent 60%),
+  radial-gradient(900px 760px at -10% 42%, rgba(201,162,63,.045), transparent 60%),
+  radial-gradient(800px 700px at 60% 115%, rgba(76,195,217,.04), transparent 60%);}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;gap:22px;padding:13px 30px;
+  background:rgba(6,8,10,.72);backdrop-filter:blur(22px) saturate(1.3);-webkit-backdrop-filter:blur(22px) saturate(1.3);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:9px;text-decoration:none;color:var(--txt)}
+.brand b{font-size:16px;letter-spacing:.08em}
+.brand span{font-size:10.5px;color:var(--txt2);letter-spacing:.1em}
+nav .links{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
+nav .links a{color:var(--txt2);text-decoration:none;font-size:12px;padding:7px 10px;border-radius:9px;transition:.25s}
+nav .links a:hover{color:var(--txt);background:var(--panel2)}
+.demo-badge{font-size:10px;letter-spacing:.13em;color:var(--forest);border:1px solid rgba(63,174,106,.35);border-radius:999px;padding:5px 12px;white-space:nowrap}
+
+section{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:100px 30px}
+.kicker{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--forest);margin-bottom:18px;font-weight:600}
+h1{font-size:clamp(40px,6.4vw,82px);font-weight:700;letter-spacing:-.03em;line-height:1.02}
+h2{font-size:clamp(28px,4vw,46px);font-weight:700;letter-spacing:-.025em;line-height:1.07;margin-bottom:14px}
+.lead{font-size:18px;line-height:1.62;color:var(--txt2);max-width:720px;font-weight:400}
+.lead strong{color:var(--txt);font-weight:600}.lead .gr{color:var(--forest)}
+.rv{opacity:0;transform:translateY(26px);transition:opacity .9s cubic-bezier(.2,.6,.2,1),transform .9s cubic-bezier(.2,.6,.2,1)}
+.rv.on{opacity:1;transform:none}
+.rv.d1{transition-delay:.1s}.rv.d2{transition-delay:.22s}.rv.d3{transition-delay:.34s}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1!important;transform:none!important;transition:none!important}}
+
+#hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding-top:130px;position:relative;overflow:hidden}
+.hero-net{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.72;pointer-events:none}
+#hero .hero-inner{position:relative;z-index:1;width:100%}
+#hero .hero-brand{font-size:clamp(22px,3vw,38px);font-weight:800;letter-spacing:.05em;color:var(--txt);margin-bottom:14px;line-height:1}
+.hero-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-top:56px}
+.hstat{background:var(--bg2);padding:24px 18px}
+.hstat .n{font-size:30px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.hstat .l{font-size:11px;color:var(--txt2);margin-top:6px;line-height:1.45}
+.gr{color:var(--forest)}.go{color:var(--gold)}.cy{color:var(--cyan)}.vi{color:var(--violet)}.rd{color:var(--red)}
+.scroll-hint{margin-top:54px;font-size:12px;color:var(--txt3);letter-spacing:.12em;text-transform:uppercase}
+.scroll-hint::after{content:"↓";margin-left:8px;display:inline-block;animation:bob 2.2s infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+
+.bdg{display:inline-block;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;border-radius:5px;padding:2px 6px;vertical-align:middle;white-space:nowrap}
+.bdg.real{color:#7fb6d4;border:1px solid rgba(111,182,212,.45)}
+.bdg.sim{color:var(--gold);border:1px solid rgba(201,162,63,.5)}
+.bdg.val{color:var(--red);border:1px solid rgba(212,106,90,.45)}
+.disc{margin-top:24px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02);padding:13px 16px;font-size:11.5px;color:var(--txt3);line-height:1.6;max-width:780px}
+.disc b{color:var(--txt2)}
+.dleg{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px}
+.dl{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:var(--txt2)}
+.dl i{width:8px;height:8px;border-radius:2px}
+
+/* map */
+.map-wrap{display:grid;grid-template-columns:1.3fr .7fr;gap:26px;margin-top:42px;align-items:stretch}
+.map-panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;position:relative}
+.map-panel canvas{width:100%;height:400px;display:block;cursor:pointer}
+.tract-detail{display:flex;flex-direction:column}
+.tract-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;flex:1;display:flex;flex-direction:column}
+.tract-card .cls{font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--forest)}
+.tract-card h3{font-size:21px;margin:8px 0 4px}
+.tract-card .meta{font-size:12.5px;color:var(--txt2);line-height:1.6}
+.tkv{margin-top:16px;display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:12.5px}
+.tkv .k{color:var(--txt3)}.tkv .v{color:var(--txt);text-align:right;font-variant-numeric:tabular-nums}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px}
+.lg{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--txt2)}
+.lg i{width:9px;height:9px;border-radius:50%}
+
+/* reasoning window */
+.obj-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:42px}
+.obj{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px 16px;cursor:pointer;transition:.3s;font-family:inherit;color:var(--txt)}
+.obj .ic{font-size:18px}
+.obj h4{font-size:13.5px;font-weight:600;margin:9px 0 4px;letter-spacing:-.01em}
+.obj p{font-size:11px;color:var(--txt2);line-height:1.45}
+.obj:hover{border-color:var(--line2);transform:translateY(-2px)}
+.obj.sel{border-color:var(--forest);background:linear-gradient(180deg,rgba(63,174,106,.08),rgba(63,174,106,.02))}
+.rw-stage{display:grid;grid-template-columns:1.05fr .95fr;gap:22px;margin-top:22px}
+.rw-panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+.rw-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.rw-head .t{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--txt2);font-weight:600}
+.rw-count{font-size:13px;color:var(--txt2)}.rw-count b{color:var(--forest);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+#engGrid{display:grid;grid-template-columns:repeat(20,1fr);gap:5px;margin:16px 0 6px}
+.eng{aspect-ratio:1;border-radius:50%;background:rgba(255,255,255,.06);transition:background .5s,box-shadow .5s,transform .5s}
+.eng.on{background:var(--gold);box-shadow:0 0 9px rgba(201,162,63,.55);transform:scale(1.22)}
+.eng.on.g{background:var(--forest);box-shadow:0 0 9px rgba(63,174,106,.55)}
+.eng.on.c{background:var(--cyan);box-shadow:0 0 9px rgba(76,195,217,.55)}
+.eng.on.v{background:var(--violet);box-shadow:0 0 9px rgba(155,127,212,.55)}
+.rw-formula{margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:11px;font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--txt2);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.rw-formula .pat{font-size:9.5px;letter-spacing:.08em;color:var(--txt3)}
+.rw-metrics{display:flex;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:14px}
+.rwm{flex:1;background:var(--bg2);padding:12px;text-align:center}
+.rwm .v{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+.rwm .k{font-size:9px;color:var(--txt3);letter-spacing:.06em;text-transform:uppercase;margin-top:3px;line-height:1.3}
+.pipe .t{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--txt2);font-weight:600;margin-bottom:12px;display:block}
+.pl{display:flex;gap:13px;padding:10px 0;border-bottom:1px dashed rgba(255,255,255,.06);align-items:flex-start}
+.pl:last-child{border-bottom:none}
+.pl .lv{font-size:10px;font-weight:700;color:var(--forest);border:1px solid rgba(63,174,106,.4);border-radius:7px;padding:3px 6px;min-width:34px;text-align:center;margin-top:1px;font-variant-numeric:tabular-nums}
+.pl .px b{font-size:12.5px;font-weight:600;display:block}
+.pl .px span{font-size:11px;color:var(--txt2);line-height:1.5;display:block;margin-top:2px}
+.rw-autogen{margin-top:14px;font-size:11.5px;color:var(--txt3);line-height:1.55;border-left:1px solid rgba(63,174,106,.4);padding-left:12px}
+.rw-autogen b{color:var(--forest)}
+.rw-out{margin-top:16px;background:linear-gradient(180deg,rgba(63,174,106,.06),transparent);border:1px solid rgba(63,174,106,.3);border-radius:13px;padding:16px}
+.rw-out .ml{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--forest);font-weight:700}
+.rw-out p{font-size:13px;color:var(--txt);line-height:1.55;margin-top:6px}
+
+/* meta-layer insight cards */
+.mi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:42px}
+.mi{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px;display:flex;flex-direction:column}
+.mi .tag{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--violet)}
+.mi h3{font-size:17px;margin:9px 0 8px;line-height:1.25}
+.mi p{font-size:12.5px;color:var(--txt2);line-height:1.6;flex:1}
+.mi .src{font-size:10.5px;color:var(--txt3);margin-top:12px;line-height:1.5}
+.mi .src b{color:var(--txt2)}
+.mi .conf{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.mi .conf .c{font-size:11px;color:var(--txt2)}.mi .conf .c b{color:var(--forest);font-size:15px}
+.proof-btn{align-self:flex-start;background:transparent;border:1px solid var(--line2);color:var(--txt);font-size:11px;padding:7px 12px;border-radius:999px;cursor:pointer;font-family:inherit;transition:.2s;margin-top:4px}
+.proof-btn:hover{border-color:var(--forest);color:var(--forest)}
+
+/* estimate to measure */
+.em-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:42px}
+.em{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+.em h4{font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--txt2);margin-bottom:10px}
+.em .before{font-size:24px;font-weight:700;color:var(--txt3);text-decoration:line-through;text-decoration-color:rgba(212,106,90,.5)}
+.em .arrow{font-size:13px;color:var(--forest);margin:8px 0}
+.em .after{font-size:30px;font-weight:700;letter-spacing:-.02em}
+.em .after small{font-size:14px;color:var(--txt2)}
+.em p{font-size:12px;color:var(--txt2);line-height:1.6;margin-top:12px}
+
+/* disclosure */
+.gen-wrap{margin-top:42px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:26px}
+.gen-top{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
+.gen-top h3{font-size:18px}
+.gen-btn{background:linear-gradient(135deg,rgba(63,174,106,.18),rgba(201,162,63,.1));border:1px solid rgba(63,174,106,.45);color:var(--forest);font-size:13px;font-weight:600;padding:11px 18px;border-radius:12px;cursor:pointer;font-family:inherit;transition:.2s}
+.gen-btn:hover{background:rgba(63,174,106,.16)}
+.leap{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px}
+.leap-step{background:var(--bg2);border:1px solid var(--line);border-radius:13px;padding:16px;opacity:.35;transition:.5s}
+.leap-step.on{opacity:1;border-color:rgba(63,174,106,.35)}
+.leap-step .ln{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--forest);font-weight:700}
+.leap-step h5{font-size:13px;margin:4px 0 8px}
+.leap-step p{font-size:11px;color:var(--txt2);line-height:1.55}
+.leap-step .h{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:9.5px;color:var(--txt3);margin-top:8px;word-break:break-all}
+.gen-sig{margin-top:18px;padding:13px 16px;border:1px solid rgba(201,162,63,.3);border-radius:11px;font-size:11.5px;color:var(--txt2);line-height:1.6;display:none}
+.gen-sig.on{display:block}
+.gen-sig b{color:var(--txt)}.gen-sig .h{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--gold);word-break:break-all}
+
+/* governance */
+.gov{display:grid;grid-template-columns:1fr 56px 1fr;align-items:stretch;margin-top:42px}
+.gcol{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:26px}
+.gcol h3{margin-bottom:6px;font-size:17px}.gcol .sub{font-size:12px;color:var(--txt2);margin-bottom:16px}
+.gcol ul{list-style:none;display:flex;flex-direction:column;gap:9px}
+.gcol li{font-size:12.5px;color:var(--txt2);line-height:1.5;padding-left:16px;position:relative}
+.gcol li::before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%;background:var(--forest)}
+.gsep{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.gsep .bar{flex:1;width:1px;background:repeating-linear-gradient(to bottom,var(--forest) 0 6px,transparent 6px 13px);opacity:.5}
+.gsep .lbl{writing-mode:vertical-rl;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--forest)}
+.endcap{margin-top:26px;background:linear-gradient(135deg,rgba(63,174,106,.1),rgba(201,162,63,.05));border:1px solid rgba(63,174,106,.35);border-radius:var(--radius);padding:28px 32px}
+.endcap h3{font-size:20px}.endcap p{font-size:13px;color:var(--txt2);line-height:1.6;max-width:680px;margin-top:8px}
+
+footer{position:relative;z-index:1;border-top:1px solid var(--line);margin-top:56px;padding:38px 30px 54px}
+footer .fin{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;gap:28px;flex-wrap:wrap}
+footer p{font-size:11px;color:var(--txt3);line-height:1.7;max-width:760px}
+footer .sig{font-size:11px;color:var(--txt2);text-align:right;line-height:1.7}
+
+/* proof modal */
+#proofModal{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;background:rgba(3,5,6,.72);backdrop-filter:blur(8px)}
+#proofModal.open{display:flex}
+.proof-box{width:min(640px,92vw);max-height:84vh;overflow-y:auto;background:#0a0d11;border:1px solid var(--line2);border-radius:22px;padding:32px}
+.proof-box .ah{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.proof-box h3{font-size:18px}.proof-box .s{font-size:12px;color:var(--txt2);margin-bottom:20px;line-height:1.5}
+.aclose{background:none;border:none;color:var(--txt2);font-size:22px;cursor:pointer;line-height:1}.aclose:hover{color:var(--txt)}
+.chain{position:relative;padding-left:24px}
+.chain::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:1px;background:linear-gradient(var(--forest),rgba(63,174,106,.1))}
+.cstep{position:relative;padding-bottom:18px}
+.cstep::before{content:"";position:absolute;left:-21px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--forest)}
+.cstep .cl{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--forest);font-weight:700}
+.cstep h5{font-size:13px;font-weight:600;margin:3px 0 7px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-size:11.5px}
+.kv .k{color:var(--txt3)}.kv .v{color:var(--txt2);font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:10.5px;word-break:break-all}
+
+/* meta-net */
+.metanet{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px 22px 14px;margin-top:22px;position:relative}
+.metanet .mh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.metanet .mh .t{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--txt2);font-weight:600}
+.metanet .mh .c{font-size:13px;color:var(--txt2)}.metanet .mh .c b{color:var(--forest)}
+.metanet canvas{width:100%;height:340px;display:block}
+.mn-tip{position:absolute;pointer-events:none;display:none;background:rgba(10,13,17,.96);border:1px solid var(--line2);border-radius:9px;padding:8px 11px;font-size:12px;color:var(--txt);z-index:6;max-width:230px;line-height:1.4}
+.mn-tip span{display:block;color:var(--txt3);font-size:10.5px;margin-top:3px}
+.mn-cap{font-size:11.5px;color:var(--txt3);line-height:1.6;margin-top:12px}
+.mn-cap b{color:var(--txt2)}
+@media (max-width:900px){
+  .hero-stats{grid-template-columns:1fr 1fr}.map-wrap,.rw-stage,.em-grid{grid-template-columns:1fr}
+  .obj-tabs{grid-template-columns:1fr 1fr}.mi-grid,.leap{grid-template-columns:1fr}.gov{grid-template-columns:1fr}.gsep{display:none}
+  nav{gap:10px}
+  nav .links{gap:0;overflow-x:auto;flex:1;min-width:0;justify-content:flex-start;-webkit-overflow-scrolling:touch}
+  nav .links a{padding:6px 8px;font-size:11px;white-space:nowrap}
+  .demo-badge{display:none}
+}
+/*GLOW*/.hstat,.obj,.mi,.tract-card,.rw-panel,.q{transition:border-color .25s,box-shadow .25s,transform .25s}.hstat:hover,.obj:hover,.mi:hover,.tract-card:hover,.rw-panel:hover{border-color:rgba(255,255,255,.34)!important;box-shadow:0 0 0 1px rgba(255,255,255,.16),0 0 26px -8px rgba(120,210,170,.6)}
+#brainWrap{position:absolute;inset:0;z-index:0}
+#brain{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+#brain:active{cursor:grabbing}
+@media(max-width:760px){#brainWrap{opacity:.62}#brainWrap::after{background:radial-gradient(72% 56% at 50% 40%, transparent 26%, rgba(4,6,10,.72) 100%),linear-gradient(180deg, rgba(4,6,10,.55) 0%, transparent 30% 64%, rgba(4,6,10,.94) 100%)}}
+#brainWrap::after{content:"";position:absolute;inset:0;pointer-events:none;background:
+  radial-gradient(58% 58% at 62% 48%, transparent 46%, rgba(4,6,10,.36) 100%),
+  linear-gradient(90deg, rgba(4,6,10,.66) 0%, rgba(4,6,10,.18) 44%, transparent 64%),
+  linear-gradient(180deg, rgba(4,6,10,.4) 0%, transparent 26% 74%, rgba(4,6,10,.9) 100%)}
+#hero{max-width:none!important;padding-left:0!important;padding-right:0!important}#hero .hero-inner{max-width:1200px;margin:0 auto;padding:0 30px;pointer-events:none}
+/*ISLANDS*/html{scroll-snap-type:y mandatory}section{min-height:100vh;scroll-snap-align:start;scroll-snap-stop:always;display:flex;flex-direction:column;justify-content:safe center;padding-top:92px;padding-bottom:56px}#hero{padding-top:96px}@media(max-width:820px){html{scroll-snap-type:none}section{min-height:auto;display:block;padding-top:80px}}
+/*PROBLEM*/#problem .qgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-top:40px}#problem .q{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px 19px;transition:border-color .25s,box-shadow .25s,transform .25s;min-height:104px;display:flex;flex-direction:column;cursor:pointer;position:relative}#problem .q:hover{border-color:var(--forest);transform:translateY(-3px);box-shadow:0 0 0 1px var(--forest),0 0 28px -8px var(--forest)}#problem .q:focus-visible{outline:2px solid var(--forest);outline-offset:3px}#problem .q .qn{font-size:12px;font-weight:700;color:var(--forest);font-variant-numeric:tabular-nums;margin-bottom:12px;letter-spacing:.1em}#problem .q p{font-size:15px;color:var(--txt);line-height:1.32;font-weight:600;letter-spacing:-.01em;margin:0}#problem .q span{display:block;font-size:12.5px;color:var(--txt2);line-height:1.55;font-weight:400;max-height:0;opacity:0;overflow:hidden;margin-top:0;transition:max-height .45s cubic-bezier(.2,.6,.2,1),opacity .35s,margin-top .35s}#problem .q.open span{max-height:320px;opacity:1;margin-top:11px}#problem .q::after{content:"+";position:absolute;top:22px;right:16px;color:var(--forest);font-size:17px;line-height:1;pointer-events:none}#problem .q.open::after{content:"–"}#problem .turn{margin-top:26px;font-size:15px;color:var(--txt2);max-width:780px;line-height:1.6}#problem .turn b{color:var(--forest)}@media(max-width:900px){#problem .qgrid{grid-template-columns:1fr 1fr}}@media(max-width:560px){#problem .qgrid{grid-template-columns:1fr}}
+.cta-row{display:flex;align-items:center;gap:18px;margin-top:22px;flex-wrap:wrap}.cta{display:inline-block;background:var(--forest);color:#04130a;font-weight:700;font-size:13px;letter-spacing:.04em;padding:13px 22px;border-radius:11px;text-decoration:none;transition:transform .2s,box-shadow .2s}.cta:hover{transform:translateY(-2px);box-shadow:0 12px 32px -12px var(--forest)}.cta-note{font-size:12px;color:var(--txt3);max-width:340px;line-height:1.5}
+/*RW-AMAZING*/@keyframes engPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.55)}}.eng.on{animation:engPulse 1.9s ease-in-out infinite}#reasoning .obj{transition:border-color .25s,box-shadow .25s,transform .25s}#reasoning .obj:hover{border-color:var(--forest);transform:translateY(-2px);box-shadow:0 0 0 1px var(--forest),0 0 26px -8px var(--forest)}#reasoning .obj.sel{box-shadow:0 0 0 1px var(--forest),0 0 32px -10px var(--forest)}.rwm .v{text-shadow:0 0 22px currentColor}.rw-panel{transition:box-shadow .3s,border-color .3s}.rw-panel:hover{border-color:var(--line2);box-shadow:0 0 34px -16px rgba(120,210,170,.6)}.pl .lv{transition:box-shadow .3s}.pl:hover .lv{box-shadow:0 0 16px -4px var(--forest)}
+/*HERO-REVEAL*/#hero .rv{transition-duration:1.15s!important}#hero .hero-brand.rv{transition-delay:.35s}#hero .kicker.rv{transition-delay:1.25s;font-size:15px;letter-spacing:.28em;margin-bottom:22px}#hero h1.rv{transition-delay:2.25s}#hero .sub.rv{transition-delay:3.75s}#hero .scroll-hint.rv{transition-delay:5.1s}
+/*ML-AMAZING*/.mi{position:relative;overflow:hidden;transition:border-color .25s,box-shadow .25s,transform .25s}.mi::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--violet),transparent);transform:translateX(-100%);animation:miScan 4.2s ease-in-out infinite}@keyframes miScan{0%{transform:translateX(-100%)}55%,100%{transform:translateX(100%)}}.mi:nth-child(2)::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent);animation-delay:1.3s}.mi:nth-child(3)::before{background:linear-gradient(90deg,transparent,var(--forest),transparent);animation-delay:2.6s}.mi:hover{border-color:var(--line2);transform:translateY(-4px);box-shadow:0 0 0 1px var(--line2),0 0 34px -10px rgba(155,127,212,.55)}.mi .conf .c b{text-shadow:0 0 18px currentColor}.proof-btn{transition:border-color .2s,box-shadow .2s,color .2s}.proof-btn:hover{border-color:var(--forest);box-shadow:0 0 20px -6px var(--forest);color:var(--forest)}
+/*MEAS-DISC-AMAZING*/.em{position:relative;transition:border-color .25s,box-shadow .25s,transform .25s}.em:hover{border-color:var(--forest);transform:translateY(-3px);box-shadow:0 0 0 1px var(--forest),0 0 30px -10px var(--forest)}.em .after{text-shadow:0 0 20px rgba(63,174,106,.55)}.em .arrow{animation:emArrow 2.2s ease-in-out infinite}@keyframes emArrow{0%,100%{opacity:.55;transform:translateY(0)}50%{opacity:1;transform:translateY(3px)}}.gen-btn{transition:box-shadow .25s,transform .2s}.gen-btn:hover{box-shadow:0 0 26px -8px var(--forest);transform:translateY(-2px)}.gen-wrap{transition:box-shadow .3s,border-color .3s}.gen-wrap:hover{border-color:var(--line2);box-shadow:0 0 34px -16px rgba(63,174,106,.5)}.leap .h{text-shadow:0 0 14px rgba(76,195,217,.5)}
+/*BATCH1*/.endcap h3{font-size:clamp(21px,2.5vw,30px)}.endcap p{font-size:15.5px;line-height:1.66}.endcap{transition:box-shadow .3s}.endcap:hover{box-shadow:0 0 44px -20px rgba(63,174,106,.55)}.hstat{padding:28px 22px;transition:transform .25s,box-shadow .25s,background .25s}.hstat .n{font-size:34px}.hstat .l{font-size:12.5px;color:var(--txt2);line-height:1.5}.hstat:hover{transform:scale(1.045);background:var(--bg2);box-shadow:0 0 34px -10px rgba(120,210,170,.55);position:relative;z-index:2}.disc{font-size:12.5px}.gen-wrap.done{border-color:var(--forest)!important;box-shadow:0 0 0 1px var(--forest),0 0 54px -16px var(--forest)}
+/*BATCH2*/#overview .hero-stats{grid-template-columns:repeat(3,1fr)}#overview .hstat .n{font-size:38px}@media(min-width:1100px){.lead{font-size:19.5px}.q p{font-size:16px}#problem .q span{font-size:13px}.mi p{font-size:13.5px}.mi h3{font-size:18px}.disc{font-size:13px}.tract-card .meta{font-size:13.5px}.tkv{font-size:13.5px}.endcap p{font-size:16.5px}.obj p{font-size:12px}.obj h4{font-size:14.5px}}
+/*MN-OBJ*/.mn-hint{font-size:11.5px;color:var(--txt3);letter-spacing:.03em;margin-bottom:9px}.mn-obj{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}.mn-ob{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 13px;font-size:12px;color:var(--txt2);cursor:pointer;font-family:inherit;transition:border-color .2s,box-shadow .2s,color .2s,transform .2s}.mn-ob:hover{border-color:var(--line2);color:var(--txt);transform:translateY(-1px)}.mn-ob.sel{border-color:var(--forest);color:var(--forest);box-shadow:0 0 0 1px var(--forest),0 0 20px -8px var(--forest)}
+/*BEAM-ALL*/.q,.em,.hstat,.obj{position:relative;overflow:hidden}.q::before,.em::before,.hstat::before,.obj::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--forest),transparent);transform:translateX(-100%);animation:miScan 4.4s ease-in-out infinite;pointer-events:none;opacity:.85;z-index:1}.q:nth-child(2)::before,.em:nth-child(2)::before,.obj:nth-child(2)::before,.hstat:nth-child(2)::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent);animation-delay:1.1s}.q:nth-child(3)::before,.obj:nth-child(3)::before,.hstat:nth-child(3)::before{background:linear-gradient(90deg,transparent,var(--gold),transparent);animation-delay:2.2s}.q:nth-child(4)::before,.obj:nth-child(4)::before,.hstat:nth-child(4)::before{background:linear-gradient(90deg,transparent,var(--violet),transparent);animation-delay:3.3s}.hstat:nth-child(5)::before,.q:nth-child(5)::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent);animation-delay:1.7s}.hstat:nth-child(6)::before{background:linear-gradient(90deg,transparent,var(--forest),transparent);animation-delay:2.8s}.map-panel{transition:border-color .25s,box-shadow .25s}.map-panel:hover{border-color:var(--forest);box-shadow:0 0 44px -16px rgba(63,174,106,.55)}.tract-card{transition:border-color .25s,box-shadow .25s}.tract-card:hover{border-color:var(--forest);box-shadow:0 0 34px -12px var(--forest)}footer{scroll-snap-align:start;scroll-snap-stop:always;min-height:auto}
+/*ROADMAP*/.roadmap-track{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin-top:46px;margin-bottom:8px;position:relative}.roadmap-track::before{content:"";position:absolute;top:19px;left:5%;right:5%;height:2px;background:linear-gradient(90deg,var(--forest),var(--cyan),var(--gold),var(--violet));opacity:.38}.roadmap-track::after{content:"";position:absolute;top:15px;left:5%;width:9px;height:9px;border-radius:50%;background:#fff;box-shadow:0 0 12px 2px rgba(255,255,255,.8);animation:rmPart 6.5s linear infinite}@keyframes rmPart{0%{left:5%;opacity:0}12%{opacity:1}88%{opacity:1}100%{left:94%;opacity:0}}.rphase{position:relative;padding-top:54px}.rp-n{position:absolute;top:0;left:0;width:40px;height:40px;border-radius:50%;background:var(--bg2);border:1px solid var(--forest);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:var(--forest);box-shadow:0 0 22px -6px var(--forest)}.rphase:nth-child(2) .rp-n{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 22px -6px var(--cyan)}.rphase:nth-child(3) .rp-n{border-color:var(--gold);color:var(--gold);box-shadow:0 0 22px -6px var(--gold)}.rphase:nth-child(4) .rp-n{border-color:var(--violet);color:var(--violet);box-shadow:0 0 22px -6px var(--violet)}.rp-t{font-size:14.5px;font-weight:700;color:var(--txt);margin-bottom:7px}.rp-d{font-size:12.5px;color:var(--txt2);line-height:1.55}.rp-when{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3);margin-top:10px}@media(max-width:820px){.roadmap-track{grid-template-columns:1fr 1fr}.roadmap-track::before,.roadmap-track::after{display:none}}
+/*ARP-MAP*/.tchips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}.tchip{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:11.5px;color:var(--txt2);cursor:pointer;font-family:inherit;transition:border-color .2s,color .2s,box-shadow .2s}.tchip:hover{border-color:var(--line2);color:var(--txt)}.tstatus{display:inline-block;font-size:11px;border:1px solid;border-radius:999px;padding:5px 12px;margin-top:12px}.tspark-wrap{margin:14px 0 2px}.tspark-wrap canvas{width:100%;height:70px;display:block}.tsl{display:flex;justify-content:space-between;font-size:10.5px;color:var(--txt3);margin-top:6px}.map-panel,.tract-card{position:relative;overflow:hidden}.map-panel::before,.tract-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;transform:translateX(-100%);animation:miScan 4.6s ease-in-out infinite;pointer-events:none;z-index:3}.map-panel::before{background:linear-gradient(90deg,transparent,var(--forest),transparent)}.tract-card::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent);animation-delay:2.3s}
+/*GHOST*/.cta-ghost{background:transparent;color:var(--forest);border:1px solid var(--forest)}.cta-ghost:hover{background:rgba(63,174,106,.08);box-shadow:0 0 22px -10px var(--forest)}
+/*SIMULATOR*/.sim-scen{display:flex;flex-wrap:wrap;gap:10px;margin-top:40px}.sim-chip{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 18px;font-size:13px;color:var(--txt2);cursor:pointer;font-family:inherit;transition:border-color .2s,color .2s,box-shadow .2s,transform .2s}.sim-chip .sc-ic{color:var(--txt3);margin-right:2px}.sim-chip:hover{border-color:var(--line2);color:var(--txt);transform:translateY(-2px)}.sim-chip.sel{border-color:var(--forest);color:var(--forest);box-shadow:0 0 0 1px var(--forest),0 0 24px -8px var(--forest)}.sim-chip.sel .sc-ic{color:var(--forest)}.sim-out{margin-top:26px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:30px;position:relative;overflow:hidden}.sim-out::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--forest),transparent);transform:translateX(-100%);animation:miScan 4.4s ease-in-out infinite}.so-lbl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--forest);font-weight:700;margin-bottom:9px}.so-rec{font-size:20px;color:var(--txt);line-height:1.35;font-weight:600;letter-spacing:-.01em;margin:0}.so-metrics{display:flex;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:22px 0}.som{flex:1;background:var(--bg2);padding:16px;text-align:center}.som .sv{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}.som .sk{font-size:10px;color:var(--txt3);letter-spacing:.06em;text-transform:uppercase;margin-top:4px}.so-driver{font-size:12.5px;color:var(--txt2);line-height:1.55}.so-driver b{color:var(--txt)}
+/*QLASER*/@property --qa{syntax:"<angle>";inherits:false;initial-value:0deg}#problem .q::before{display:none!important}#problem .qgrid{position:relative}#problem .qgrid::after{content:"";position:absolute;inset:-2px;border-radius:20px;padding:1.5px;background:conic-gradient(from var(--qa),transparent 0deg,transparent 296deg,rgba(63,174,106,.5) 330deg,#eafff2 350deg,rgba(63,174,106,.5) 360deg);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:qspin 7s linear infinite;pointer-events:none;z-index:2}@keyframes qspin{to{--qa:360deg}}/*NAVFIX*/nav .links a{color:rgba(255,255,255,.86)!important;font-weight:500!important}nav .links a:hover{color:#fff!important}
+/*HERO-LAYOUT*/#brainWrap{transform:translateX(10%)}@media(min-width:1000px){#hero .hero-inner{transform:translateX(-26px)}}
+/*HERO-FADE*/#hero .hero-inner{z-index:2}#hero::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(6,8,10,.95) 0%,rgba(6,8,10,.9) 20%,rgba(6,8,10,.52) 45%,rgba(6,8,10,0) 66%)}
+</style>
+</head>
+<body>
+<div class="bgfx"></div>
+
+<nav>
+  <a class="brand" href="#hero"><b>TIR · ENNOUS LAB</b><span>Meta-Intelligence</span></a>
+  <div class="links">
+    <a href="#portfolio">Portfolio</a>
+    <a href="#reasoning">Reasoning Window</a>
+    <a href="#metalayer">Meta-Layer</a>
+    <a href="#measure">Measure</a>
+    <a href="#disclosure">Disclosure</a>
+    <a href="#governance">Governance</a>
+  </div>
+  <span class="demo-badge">DEMO · CONFIDENTIAL</span>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div id="brainWrap"><canvas id="brain"></canvas></div>
+  <div class="hero-inner">
+  <div class="hero-brand rv">TIR · ENNOUS LAB</div>
+  <div class="kicker rv d1">Meta-Intelligence</div>
+  <h1 class="rv d1">841,000 acres.<br>One governing intelligence.</h1>
+  <p class="lead sub rv d2" style="margin-top:22px;max-width:600px">Estimates become measures, the Whole-Forest, calibrated and proven per stand.</p>
+  <a href="#problem" class="scroll-hint rv d3">Explore</a>
+  </div>
+</section>
+
+<!-- THE PROBLEM -->
+<section id="problem">
+  <div class="kicker rv">The problem</div>
+  <h2 class="rv d1">AI is arriving in every portfolio.<br>Few can govern it.</h2>
+  <p class="lead rv d2">Adopting a model is easy; governing it is hard. Before an LP, a regulator or a field trusts a number, a handful of questions decide everything, and most organisations, however expert in their own domain, cannot answer one of them.</p>
+    <div class="qgrid rv d2">
+    <div class="q"><div class="qn">Q1</div><p>Which model, and why this one?</p><span>Is it the best model for <em>this</em> decision, or simply the one already installed? Every question deserves the analysis that fits it, not a default.</span></div>
+    <div class="q"><div class="qn">Q2</div><p>When is it even worth it?</p><span>Not every decision needs a heavy model. When does AI add value over its cost and risk, and when is the simplest method the honest one?</span></div>
+    <div class="q"><div class="qn">Q3</div><p>All the signal, or the convenient part?</p><span>Is every useful source captured and brought to one comparable grammar, or only the data that was easy to reach?</span></div>
+    <div class="q"><div class="qn">Q4</div><p>Out of the black box?</p><span>Can the reasoning be opened and read, step by step, or is trusting the output an act of faith?</span></div>
+    <div class="q"><div class="qn">Q5</div><p>Efficiency and error, measured?</p><span>How much compute, and how much uncertainty around the answer, quantified and tracked, not assumed?</span></div>
+    <div class="q"><div class="qn">Q6</div><p>Who governs the models, and what emerges?</p><span>When many models run, what governs them? And what pattern surfaces across them that no single model, and no human query, could reach alone?</span></div>
+  </div>
+  <p class="turn rv d3">Ennous is the brain that governs the brains, it chooses among models, gathers the signal, opens the reasoning, quantifies efficiency and error, and leaves a proof. <b>By construction.</b> Then it applies that where measurement is hardest: the working forest.</p>
+</section>
+
+<!-- OVERVIEW -->
+<section id="overview">
+  <div class="kicker rv">The portfolio in one view</div>
+  <p class="lead rv d2">
+    For a working-forest portfolio, value is increasingly a function of the <strong>quality of its proof</strong>.
+    Ennous renders estimates as <strong class="gr">measured, calibrated, auditable numbers</strong>, timber yield,
+    biodiversity, climate risk, and composes the right analysis for each question on its own. Not another AI tool:
+    a self-governing measurement layer, with calibrated, empirically-tracked coverage and an audit trail.
+  </p>
+  <div class="hero-stats rv d3">
+    <div class="hstat"><div class="n gr">841k</div><div class="l">acres of sustainable working forest · 15 US states <span class="bdg real">TIR 2025</span></div></div>
+    <div class="hstat"><div class="n">$2.2B</div><div class="l">assets under management ($1.7B US · $497M Europe)</div></div>
+    <div class="hstat"><div class="n cy">5</div><div class="l">Whole-Forest revenue drivers · timber-led (pulp → sawtimber as stands mature)</div></div>
+    <div class="hstat"><div class="n go">~90</div><div class="l">intelligence engines <b>potentially activatable</b> · ~1 in 10 ignited per decision · figure estimated from an average of high-complexity projects</div></div>
+    <div class="hstat"><div class="n">SHA-256</div><div class="l">proof chain on every measure · TNFD / Art.9 ready</div></div>
+    <div class="hstat"><div class="n gr">CNR-IAC</div><div class="l">measurement method independently validated · a body of Italy's national research council · relevant for audit</div></div>
+  </div>
+  <div class="disc rv d3">
+    <b>Nature of the data.</b> Method: <b>simulate from origin</b>. Where a real figure exists (TIR-provided documents (Fund 2 factsheet &amp; Sustainability Report))
+    it is the <b>origin</b>, and behaviour is simulated forward from it with realistic models and architecture; absent a
+    figure, assumptions are marked «to validate». Real from day one: the pipeline, the calibration method, the proof chain.
+    <span class="dleg">
+      <span class="dl"><i style="background:#7fb6d4"></i>TIR-provided</span>
+      <span class="dl"><i style="background:var(--gold)"></i>simulated from origin</span>
+      <span class="dl"><i style="background:var(--forest)"></i>measured · engine</span>
+      <span class="dl"><i style="background:var(--red)"></i>to validate on TIR data</span>
+    </span>
+  </div>
+</section>
+
+<!-- PORTFOLIO MAP -->
+<section id="portfolio">
+  <div class="kicker rv">01 · The portfolio, alive</div>
+  <h2 class="rv d1">Tracts apart. Signals comparable.</h2>
+  <p class="lead rv d2">
+    841,000 acres across 15 states, a strong primary focus on the U.S. South. Today each tract lives in its own
+    silo, inventory, GIS, carbon estimates, certification records. Here they converge in a single working view, with
+    a common grammar: value, unit, provenance, uncertainty, time. Select a region.
+  </p>
+  <div class="map-wrap rv d2">
+    <div class="map-panel"><canvas id="usMap"></canvas>
+      <div class="legend">
+        <span class="lg"><i style="background:var(--forest)"></i>U.S. South (primary)</span>
+        <span class="lg"><i style="background:var(--cyan)"></i>Northwest</span>
+        <span class="lg"><i style="background:var(--violet)"></i>Lake States</span>
+        <span class="lg"><i style="background:var(--gold)"></i>Northeast</span>
+      </div>
+    </div>
+    <div class="tract-detail"><div class="tchips" id="tChips"></div><div class="tract-card" id="tractCard"></div></div>
+  </div>
+  <p class="disc rv d3" style="max-width:none"><b>On the data.</b> Acreage, AUM, carbon stock, certification and risk
+  figures are from TIR documents (2025 Sustainability Report &amp; Fund 2 factsheet). Tract-level positions and per-tract metrics
+  are <span class="bdg sim">simulated from origin</span>, distributed across the real regions and totals, to show the
+  designed behaviour. The platform connects to TIR's real inventory and GIS without architectural change.</p>
+</section>
+
+<!-- REASONING WINDOW -->
+<section id="reasoning">
+  <div class="kicker rv">02 · The Reasoning Window</div>
+  <h2 class="rv d1">You don't ask «what if».<br>You change the objective, and the intelligence recomposes itself.</h2>
+  <p class="lead rv d2">
+    A sensitivity slider recomputes one fixed formula. This does not. Change the <strong>objective</strong> and a patent-pending
+    layer <strong>composes its own analysis pipeline</strong> (L4-bis), <strong class="gr">ignites only the optimal
+    subset</strong> of ~90 engines and idles the rest, so <strong>intelligence runs at a fraction of the cost</strong> while
+    <strong>confidence stays measured</strong>. Pick an objective.
+  </p>
+  <div class="obj-tabs rv d2" id="objTabs"></div>
+  <div class="rw-stage rv d3">
+    <div class="rw-panel">
+      <div class="rw-head"><span class="t">Adaptive gating · ~90-engine catalogue</span><span class="rw-count"><b id="gActive">0</b> / ~90 active</span></div>
+      <div id="engGrid"></div>
+      <div class="rw-formula"><span>E(M<sub>i</sub>) = α·Acc − β·Lat − γ·En + δ·Rob &nbsp;·&nbsp; budget-constrained selection</span><span class="pat">PATENT PENDING 11.E2118.12.IT.7 · +5 CIP</span></div>
+      <div class="rw-metrics">
+        <div class="rwm"><div class="v" id="mCycle">,</div><div class="k">analysis cycle</div></div>
+        <div class="rwm"><div class="v go" id="mSave">,</div><div class="k">compute saved</div></div>
+        <div class="rwm"><div class="v gr" id="mCov">,</div><div class="k">conformal coverage</div></div>
+      </div>
+      <div class="rw-autogen" id="autogen"></div>
+    </div>
+    <div class="rw-panel pipe">
+      <span class="t">Auto-composed pipeline · L1 → L5</span>
+      <div id="pipeBody"></div>
+      <div class="rw-out"><div class="ml">Meta-Layer · ML6/ML7</div><p id="rwOut"></p></div>
+    </div>
+  </div>
+</section>
+
+<!-- META-NET -->
+<section id="metanet">
+  <div class="kicker rv">02b · The meta-net</div>
+  <h2 class="rv d1">Every node is a network.</h2>
+  <div class="metanet rv d2">
+    <div class="mh"><span class="t">Meta-net · every node is a network</span><span class="c" id="mnLabel"></span></div>
+    <div class="mn-hint">Change the objective, the network recomposes, and the number of engines with it:</div>
+    <div class="mn-obj" id="mnObj"></div>
+    <canvas id="mnCanvas"></canvas>
+    <div class="mn-tip" id="mnTip"></div>
+    <p class="mn-cap"><b>How to read this.</b> Each node is an analytical engine, and each is itself a network: the inner
+    mesh is visible in transparency. The path runs from the data (left), passes only through the engines the gating
+    ignites for this objective, converges in meta-fusion and reaches the Decision Hub. This is meta-intelligence: not a
+    bigger model, but the governed composition of many specialist models. Hover a node.</p>
+  </div>
+
+  <details class="disc rv d3" style="max-width:none"><summary style="cursor:pointer;color:var(--forest);font-weight:600">What you are watching</summary>
+    <div style="margin-top:8px">The catalogue holds ~90 physics-consistent and data-driven engines. <b>L4-bis</b> evaluates the valid
+    pipeline compositions (a grammar reduces the search from O(2^N) to a few hundred), scores each, and runs only the best.
+    The objective change re-composes the machine, different engines, different pipeline, different cost, with coverage held.
+    <b>What runs today</b> is the orchestration layer, budget-constrained gating, conditional-conformal calibration, hash-chained audit and the ML6/ML7 meta-layer, together with the biodiversity and multispectral engine family already in production (78 indices, CNR &amp; Sapienza). The forest-carbon engines shown above are composed from the same deposited architecture and instantiated on TIR's inventory during the pilot, not assumed pre-built.
+    Figures simulated, consistent with the deposited architecture's measured behaviour (~80–90% compute saved, coverage near 0.90).</div></details>
+</section>
+
+<!-- META-LAYER -->
+<!-- DECISION SIMULATOR -->
+<section id="simulator">
+  <div class="kicker rv">02c · Decision Simulator</div>
+  <h2 class="rv d1">One engine. Many forests.</h2>
+  <p class="lead rv d2">The forest changes, the engine recomposes, and the recommendation changes with it. The confidence stays measured. Pick a condition.</p>
+  <div class="sim-scen rv d2" id="simScen"></div>
+  <div class="sim-out rv d3" id="simOut"></div>
+</section>
+
+<section id="metalayer">
+  <div class="kicker rv">03 · The Meta-Layer speaks</div>
+  <h2 class="rv d1">Conclusions no single model, and no human query, could reach.</h2>
+  <p class="lead rv d2">
+    These do not come out of a model. They come from watching <strong>which models win, and how that changes over
+    time</strong>, meta-knowledge over the portfolio. Each carries the engine subset that produced it, a calibrated
+    confidence, and a proof chain.
+  </p>
+  <div class="mi-grid rv d2" id="miGrid"></div>
+  <p class="disc rv d3" style="max-width:none"><b>Why it matters.</b> The first surfaces a portfolio risk you cannot
+  see by summing tract reports; the second means the system maintains itself, lowering model-risk; the third lowers the
+  marginal cost of intelligence on every new acquisition. Patterns illustrative, mechanism real (ML6 fingerprint transfer
+  &amp; ML7 drift/meta-pattern, reduced to practice).</p>
+</section>
+
+<!-- ESTIMATE TO MEASURE -->
+<section id="measure">
+  <div class="kicker rv">04 · From estimate to measure</div>
+  <h2 class="rv d1">The number an LP can defend.</h2>
+  <p class="lead rv d2">
+    Across the Whole-Forest, value turns on stand-level decisions, growth and yield, when to thin, when to harvest, and to which product as stands mature from pulpwood to sawtimber. The platform renders each as a
+    <strong class="gr">measure</strong>, satellite-and-ground fusion, explicit uncertainty, audit trail, not a table estimate. The same engine makes carbon, one of five Whole-Forest drivers, equally defensible, and fills the one pillar of the Winged Biodiversity™ Program still maturing: <strong>Measuring &amp; Monitoring</strong>.
+  </p>
+  <div class="em-grid rv d2">
+    <div class="em">
+      <h4>Stand value · growth, yield, product mix</h4>
+      <div class="before">inventory table <span style="font-size:13px">· estimate</span></div>
+      <div class="arrow">↓ in a pilot, measured by the engine</div>
+      <div class="after">per stand <small>· calibrated band · provenance · drift-watched</small></div>
+      <p>When to thin, when to harvest, to which product (pulpwood → sawtimber), the decisions behind the 8–10% target return and 3% cash yield, each rendered measurable rather than tabled. <span class="bdg val">to validate on TIR data</span></p>
+    </div>
+    <div class="em">
+      <h4>Carbon · one of five drivers</h4>
+      <div class="before">8.5 tCO₂e/acre/yr <span style="font-size:13px">· estimate (Winrock)</span></div>
+      <div class="arrow">↓ engine layer</div>
+      <div class="after">8.4 <small>tCO₂e · band 7.9–8.9 · illustrative</small></div>
+      <p>Carbon is ~26K acres of projects today; the same engine makes it a measure with per-stand provenance, what registries and the EU Taxonomy require, if and when TIR scales it. The Winged Biodiversity™ M&amp;M pillar is filled the same way. <span class="bdg sim">simulated from origin</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- DISCLOSURE -->
+<section id="disclosure">
+  <div class="kicker rv">05 · The disclosure, generated</div>
+  <h2 class="rv d1">An evidence packet, not a slide deck.</h2>
+  <p class="lead rv d2">
+    TIR aligned with <strong>TNFD</strong> in 2025 and the Fund is <strong>SFDR Article 9</strong>, managed by TIR Europe (FCA-regulated) under AIFMD. The same proof chain
+    that backs each measure <strong class="gr">compiles the disclosure itself</strong>, TNFD's LEAP structure and the
+    Article 9 indicators, with the final hash as a filing signature. The portfolio already rests on a third-party certification spine, <strong>99.8% of acres independently certified</strong> (SFI · PwC audit, Dec 2025). The underlying measurement method is validated with <strong>CNR-IAC</strong>, a body of Italy's national research council (CNR), relevant for independent audit.
+  </p>
+  <div class="gen-wrap rv d2">
+    <div class="gen-top">
+      <h3>TNFD-LEAP + SFDR Article 9 · auto-compiled from the proof chain</h3>
+      <button class="gen-btn" id="genBtn" onclick="generateDisclosure()">▶ Generate disclosure</button>
+    </div>
+    <div class="leap" id="leap"></div>
+    <div class="gen-sig" id="genSig"></div>
+  </div>
+  <p class="disc rv d3" style="max-width:none">Demonstration with simulated data; the SHA-256 digests are computed live in
+  the browser, step by step. In production the register is immutable, signed and time-stamped, an auditor or an LP retraces
+  any figure without privileged access. A tamper-evident hash chain, not a blockchain.</p>
+</section>
+
+<!-- GOVERNANCE + PATH -->
+<section id="governance">
+  <div class="kicker rv">06 · The boundaries</div>
+  <h2 class="rv d1">The platform measures.<br>The decisions stay with TIR.</h2>
+  <p class="lead rv d2">
+    It measures, estimates, flags and documents. It does not allocate capital, price acquisitions or replace the
+    investment committee. It does not replace TIR's process, it renders it <strong>usable, recurring and verifiable</strong>.
+  </p>
+  <div class="gov rv d2">
+    <div class="gcol"><h3>The platform does</h3><div class="sub">working measurement layer</div>
+      <ul>
+        <li>Carbon &amp; biodiversity as measures, with calibrated uncertainty</li>
+        <li>Fire / pest / drought early-warning per tract, with lead time</li>
+        <li>Portfolio-level risk the sum of tools cannot see</li>
+        <li>TNFD / SFDR Article 9 disclosure with a proof chain</li>
+      </ul>
+    </div>
+    <div class="gsep"><div class="bar"></div><div class="lbl">boundary</div><div class="bar"></div></div>
+    <div class="gcol"><h3>Stays with the firm</h3><div class="sub">investment committee · foresters · LPs</div>
+      <ul>
+        <li>Capital allocation, underwriting and disposition</li>
+        <li>Silviculture and field decisions on the ground</li>
+        <li>Fiduciary judgement and LP relationships</li>
+        <li>TIR retains ownership and governance of its data; the underlying Ennous IP stays licensed and protected</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP + COOPERATION -->
+<section id="roadmap">
+  <div class="kicker rv">07 · The path</div>
+  <h2 class="rv d1">A semester to prove the whole,<br>in miniature.</h2>
+  <p class="lead rv d2">The first version runs on one sub-parcel, chosen with your foresters so it carries, in miniature, every challenge of the whole: several regions, the pulp-to-sawtimber maturity range, the fire and pest exposure, the certification and disclosure load. Prove the governing layer there, in about six months, and it would extend with confidence.</p>
+  <div class="roadmap-track rv d3">
+    <div class="rphase"><div class="rp-n">1</div><div class="rp-t">Semester 1 · the sub-parcel</div><div class="rp-d">The governing layer, live on a representative sub-parcel that carries every issue of the whole. Evidence gate.</div><div class="rp-when">~6 months</div></div>
+    <div class="rphase"><div class="rp-n">2</div><div class="rp-t">Extend · larger portions</div><div class="rp-d">Proven there, it extends to more tracts and regions, on TIR's own data.</div><div class="rp-when">next</div></div>
+    <div class="rphase"><div class="rp-n">3</div><div class="rp-t">The whole book</div><div class="rp-d">841,000 acres, across the funds. One governed measurement layer.</div><div class="rp-when">scale</div></div>
+    <div class="rphase"><div class="rp-n">4</div><div class="rp-t">Standing venture</div><div class="rp-d">A standing capability, or a joint venture. TIR · Ennous Lab.</div><div class="rp-when">horizon</div></div>
+  </div>
+  <div class="endcap rv d3">
+    <h3>TIR · Ennous Lab</h3>
+    <p>Ennous is a governing intelligence over many models. Its value is <strong>holistic</strong>: the meta-layer reads patterns across the portfolio that no single measure, and no single tool, can. So a first engagement is not one model on one tract. It runs the full governing layer on a small, <strong>representative sample</strong> of the book: a varied, cross-regional set of acres and investments that still reflects the whole. A hologram of the portfolio, governed in miniature.</p>
+    <p>Because the part reflects the whole, the governance is real on day one, on TIR's own data, with an <strong>evidence gate at every step</strong>. Should it prove its value there, the same layer could extend to larger portions, to the full 841,000 acres, and across the funds, as a standing capability or a joint venture. <strong class="gr">The measure of success is simple: whether every number in the book becomes measured, governed and provable.</strong></p>
+    <div class="cta-row"><a class="cta" href="mailto:info@ecobubble.it?subject=TIR%20%C2%B7%20Ennous%20Lab%20%E2%80%94%20holographic%20slice">Choose the first sub-parcel, together &rarr;</a><a class="cta cta-ghost" href="https://calendly.com/nicola-nescatelli/30min">Book a call</a><span class="cta-note">Co-selected with your foresters. Six months, one representative sub-parcel, every issue of the whole, decided on evidence.</span></div>
+  </div>
+</section>
+
+<footer>
+  <div class="fin">
+    <p><b>TIR · Ennous.</b> Demonstration prepared for Timberland Investment
+    Resources. Firm references (841,000 acres / 15 states; $2.2B AUM; 72.7M tCO₂e; 8.5 tCO₂e/acre/yr; SFI 99.8%; TNFD 2025;
+    Article 9; Winged Biodiversity™) are drawn from TIR's 2025 Sustainability Report and the SF&amp;NC Fund 2 (TIR-provided)
+    factsheet. Tract telemetry, gating scores, meta-layer insights and disclosures are <b>simulated from origin</b> and
+    reproduce the designed behaviour of the system, per the deposited architecture (patent 11.E2118.12.IT.7, pending, + 5
+    technical extensions, candidate). Nothing herein is a certified measure, financial advice or an offer. The platform
+    measures and estimates; valuations and decisions remain with the firm's governing bodies.</p>
+    <div class="sig">ENNOUS · Meta-Intelligence Lab<br>Plant &amp; Geo-Driven Systems<br><span style="color:var(--txt3)">v1.0 · 2026</span></div>
+  </div>
+</footer>
+
+<!-- PROOF MODAL -->
+<div id="proofModal" role="dialog" aria-modal="true">
+  <div class="proof-box">
+    <div class="ah"><h3 id="pmTitle">Proof chain</h3><button class="aclose" onclick="closeProof()">×</button></div>
+    <div class="s" id="pmSub"></div>
+    <div class="chain" id="pmChain"></div>
+  </div>
+</div>
+
+<script>
+/* ===== SHA-256 (sync, for proof chain) ===== */
+const SHA256=(function(){const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];const rr=(x,n)=>(x>>>n)|(x<<(32-n));return function(msg){const enc=new TextEncoder().encode(msg);const l=enc.length,bl=l*8;const pad=((l+8)>>6)+1<<6;const m=new Uint8Array(pad);m.set(enc);m[l]=0x80;new DataView(m.buffer).setUint32(pad-4,bl>>>0);new DataView(m.buffer).setUint32(pad-8,Math.floor(bl/4294967296));let h0=0x6a09e667,h1=0xbb67ae85,h2=0x3c6ef372,h3=0xa54ff53a,h4=0x510e527f,h5=0x9b05688c,h6=0x1f83d9ab,h7=0x5be0cd19;const w=new Int32Array(64),dv=new DataView(m.buffer);for(let i=0;i<pad;i+=64){for(let t=0;t<16;t++)w[t]=dv.getInt32(i+t*4);for(let t=16;t<64;t++){const s0=rr(w[t-15],7)^rr(w[t-15],18)^(w[t-15]>>>3);const s1=rr(w[t-2],17)^rr(w[t-2],19)^(w[t-2]>>>10);w[t]=(w[t-16]+s0+w[t-7]+s1)|0;}let a=h0,b=h1,c=h2,d=h3,e=h4,f=h5,g=h6,h=h7;for(let t=0;t<64;t++){const S1=rr(e,6)^rr(e,11)^rr(e,25),ch=(e&f)^(~e&g);const t1=(h+S1+ch+K[t]+w[t])|0;const S0=rr(a,2)^rr(a,13)^rr(a,22),mj=(a&b)^(a&c)^(b&c);const t2=(S0+mj)|0;h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0;}h0=(h0+a)|0;h1=(h1+b)|0;h2=(h2+c)|0;h3=(h3+d)|0;h4=(h4+e)|0;h5=(h5+f)|0;h6=(h6+g)|0;h7=(h7+h)|0;}return[h0,h1,h2,h3,h4,h5,h6,h7].map(x=>(x>>>0).toString(16).padStart(8,'0')).join('');};})();
+const H=x=>SHA256(x).slice(0,40);
+
+/* ===== US MAP (dotted) + tracts ===== */
+const US=[[-124.5,48.3],[-124,46],[-124,43],[-122,40],[-120.5,37],[-118,34],[-117.1,32.5],[-114.7,32.7],[-111,31.3],[-108.2,31.3],[-106.5,31.8],[-103,29],[-101,29.8],[-99.3,27.5],[-97.4,25.9],[-97,28],[-94,29.7],[-91.5,29.6],[-89.5,29.2],[-89,30.3],[-88,30.4],[-85.3,29.7],[-84,30],[-83,29],[-82.7,27.8],[-81.8,25.8],[-80.4,25.4],[-80.1,26.8],[-80.6,28.4],[-81.3,30.3],[-79.2,33.2],[-77,34.6],[-75.9,36.9],[-75.2,38],[-74,39.5],[-72,41],[-70.7,41.6],[-70,42.5],[-70.8,43.3],[-67,44.5],[-67.8,47.1],[-69.2,47.5],[-71.5,45.1],[-75,45],[-76.8,43.6],[-79.2,43.3],[-82.5,41.7],[-83.2,42],[-82.4,45],[-84.8,46],[-87.6,46],[-90,46.7],[-92,46.7],[-95,49],[-104,49],[-110,49],[-117,49],[-123,49],[-124.5,48.3]];
+let US_MASK=null;
+function usMaskBuild(){const OW=900,OH=540,oc=document.createElement('canvas');oc.width=OW;oc.height=OH;const o=oc.getContext('2d');
+  // project lon[-128,-66] lat[24,50] to OW×OH
+  const px=lon=>((lon+128)/(62))*OW, py=lat=>((50-lat)/(26))*OH;
+  o.fillStyle='#fff';o.beginPath();US.forEach((p,i)=>{const x=px(p[0]),y=py(p[1]);i?o.lineTo(x,y):o.moveTo(x,y);});o.closePath();o.fill();
+  US_MASK={d:o.getImageData(0,0,OW,OH).data,OW,OH,px,py};}
+function usLand(lon,lat){if(!US_MASK)return false;const x=Math.floor(US_MASK.px(lon)),y=Math.floor(US_MASK.py(lat));if(x<0||y<0||x>=US_MASK.OW||y>=US_MASK.OH)return false;return US_MASK.d[(y*US_MASK.OW+x)*4+3]>10;}
+const REG={south:'#3fae6a',nw:'#4cc3d9',lake:'#9b7fd4',ne:'#c9a23f'};
+const TRACTS=[
+ {r:'south',st:'Georgia',lon:-83.4,lat:32.7,ac:118,co:9.9,fire:0.6,bio:78},
+ {r:'south',st:'Alabama',lon:-86.8,lat:32.4,ac:96,co:8.7,fire:0.7,bio:74},
+ {r:'south',st:'Mississippi',lon:-89.6,lat:32.4,ac:84,co:8.9,fire:0.5,bio:72},
+ {r:'south',st:'Louisiana',lon:-92.2,lat:31.2,ac:71,co:8.4,fire:0.8,bio:80},
+ {r:'south',st:'East Texas',lon:-94.7,lat:31.4,ac:88,co:8.1,fire:1.1,bio:69},
+ {r:'south',st:'Arkansas',lon:-92.6,lat:34.5,ac:64,co:8.6,fire:0.6,bio:71},
+ {r:'south',st:'South Carolina',lon:-80.9,lat:33.8,ac:58,co:9.1,fire:0.5,bio:76},
+ {r:'south',st:'North Carolina',lon:-79.2,lat:35.4,ac:52,co:9.0,fire:0.4,bio:77},
+ {r:'south',st:'Florida (panhandle)',lon:-84.3,lat:30.5,ac:44,co:7.9,fire:1.3,bio:82},
+ {r:'south',st:'Virginia',lon:-78.6,lat:37.3,ac:39,co:8.8,fire:0.4,bio:73},
+ {r:'south',st:'Tennessee',lon:-88.4,lat:35.7,ac:36,co:8.5,fire:0.5,bio:70},
+ {r:'nw',st:'Oregon',lon:-123.0,lat:44.3,ac:24,co:10.4,fire:1.6,bio:66},
+ {r:'nw',st:'Washington',lon:-122.3,lat:47.0,ac:18,co:10.1,fire:1.2,bio:64},
+ {r:'lake',st:'Wisconsin',lon:-90.2,lat:45.0,ac:16,co:7.6,fire:0.3,bio:75},
+ {r:'lake',st:'Minnesota',lon:-94.2,lat:46.4,ac:14,co:7.4,fire:0.4,bio:74},
+ {r:'lake',st:'Michigan',lon:-85.2,lat:44.4,ac:12,co:7.7,fire:0.3,bio:72},
+ {r:'ne',st:'Maine',lon:-69.2,lat:45.2,ac:7,co:7.2,fire:0.2,bio:79}
+];
+let TPTS=[], tSel=0;
+let mapT0=performance.now();
+function drawUS(){
+  const cv=document.getElementById('usMap'); if(!cv||!cv.clientWidth)return; const dpr=window.devicePixelRatio||1;
+  const w=cv.clientWidth,h=400; if(cv.width!==w*dpr){cv.width=w*dpr;cv.height=h*dpr;} const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+  const pad=14; if(!US_MASK)usMaskBuild();
+  const lon0=-128,lon1=-66,lat0=24,lat1=50; const t=(performance.now()-mapT0)/1000;
+  const X=lon=>pad+((lon-lon0)/(lon1-lon0))*(w-2*pad), Y=lat=>pad+((lat1-lat)/(lat1-lat0))*(h-2*pad);
+  const GAP=6.4;
+  for(let x=pad;x<=w-pad;x+=GAP){const lon=lon0+((x-pad)/(w-2*pad))*(lon1-lon0);
+    for(let y=pad;y<=h-pad;y+=GAP){const lat=lat1-((y-pad)/(h-2*pad))*(lat1-lat0); if(usLand(lon,lat)){ctx.fillStyle='rgba(120,150,130,.24)';ctx.beginPath();ctx.arc(x,y,1.05,0,7);ctx.fill();}}}
+  TPTS=TRACTS.map(t=>({x:X(t.lon),y:Y(t.lat)}));
+  // connection arcs between same-region clusters + a travelling packet (one grammar)
+  ctx.lineWidth=0.7;
+  for(let i=0;i<TRACTS.length;i++)for(let j=i+1;j<TRACTS.length;j++){ if(TRACTS[i].r!==TRACTS[j].r)continue;
+    const a=TPTS[i],b=TPTS[j],col=REG[TRACTS[i].r];
+    ctx.strokeStyle=col+'26';ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+    const pp=(t*0.22+i*0.17+j*0.09)%1,px=a.x+(b.x-a.x)*pp,py=a.y+(b.y-a.y)*pp;
+    ctx.fillStyle=col+'d0';ctx.beginPath();ctx.arc(px,py,1.7,0,7);ctx.fill(); }
+  TRACTS.forEach((tr,i)=>{const p=TPTS[i],col=REG[tr.r],r=Math.max(3.2,Math.sqrt(tr.ac)*1.5),sel=i===tSel;
+    const pulse=0.5+0.5*Math.sin(t*1.4+i*1.1),glowR=r*(2.3+(sel?1.5:0.9)*pulse);
+    const g=ctx.createRadialGradient(p.x,p.y,1,p.x,p.y,glowR);g.addColorStop(0,col+(sel?'99':'55'));g.addColorStop(1,col+'00');ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,glowR,0,7);ctx.fill();
+    ctx.fillStyle=col;ctx.beginPath();ctx.arc(p.x,p.y,r*(sel?1.7:1+0.12*pulse),0,7);ctx.fill();
+    if(sel){ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(p.x,p.y,r*1.7+5+2*pulse,0,7);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=1;ctx.beginPath();ctx.arc(p.x,p.y,r*1.7+10+3*pulse,0,7);ctx.stroke();}});
+}
+(function mapLoop(){drawUS();requestAnimationFrame(mapLoop);})();
+function selTract(i){tSel=i;const t=TRACTS[i],col=REG[t.r];
+  const rl={south:'U.S. South',nw:'Northwest',lake:'Lake States',ne:'Northeast'}[t.r];
+  document.getElementById('tractCard').innerHTML=
+   `<div class="cls" style="color:${col}">${rl} · cluster</div><h3>${t.st}</h3>
+    <div class="meta">Working-forest cluster · ${t.ac}k acres (simulated allocation of the 841k total).</div>
+    <div class="tstatus" style="border-color:${col}66;color:${col}">\u25cf Governed measurement \u00b7 ${rl}</div>
+    <div class="tspark-wrap"><canvas id="tSpark"></canvas><div class="tsl"><span>stand-value signal \u00b7 90 days \u00b7 <span class="bdg sim">simulated</span></span><span id="tSparkLast" style="color:${col}"></span></div></div>
+    <div class="tkv">
+      <div class="k">acres</div><div class="v">${t.ac},000</div>
+      <div class="k">product · maturity</div><div class="v">pulp → sawtimber</div>
+      <div class="k">wildfire exposure</div><div class="v">${t.fire.toFixed(1)}%</div>
+      <div class="k">biodiversity index</div><div class="v">${t.bio}/100</div>
+      <div class="k">certification</div><div class="v">SFI ✓</div>
+      <div class="k">carbon · tCO₂e/ac/yr</div><div class="v">${t.co.toFixed(1)}</div>
+    </div>
+    <div style="margin-top:14px;font-size:11px;color:var(--txt3);line-height:1.5">Linked to the stand-value model, the fire early-warning and the TNFD disclosure. <span class="bdg sim">simulated from origin</span>`;
+  document.querySelectorAll('.tchip').forEach((c,j)=>{const on=j===i;c.classList.toggle('sel',on);c.style.borderColor=on?col:'';c.style.color=on?col:'';c.style.boxShadow=on?('0 0 14px -6px '+col):'';});
+  sparkTract(i,col);
+  drawUS();
+}
+(function(){const cv=document.getElementById('usMap');if(!cv)return;cv.addEventListener('click',ev=>{const r=cv.getBoundingClientRect();const x=ev.clientX-r.left,y=ev.clientY-r.top;let best=-1,bd=1e9;TPTS.forEach((p,i)=>{const d=(p.x-x)**2+(p.y-y)**2;if(d<bd){bd=d;best=i;}});if(best>=0&&bd<520)selTract(best);});})();
+function sparkTract(i,col){const cv=document.getElementById('tSpark');if(!cv||!cv.clientWidth)return;const dpr=window.devicePixelRatio||1,w=cv.clientWidth,h=70;cv.width=w*dpr;cv.height=h*dpr;const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);let s=((i+7)*2654435761)>>>0;const rnd=()=>{s=(s*1103515245+12345)>>>0;return s/4294967296;};const N=90,pts=[];let v=0.45+rnd()*0.2;for(let k=0;k<N;k++){v+=(rnd()-0.47)*0.06;v=Math.max(0.15,Math.min(0.92,v));pts.push(v);}const X=k=>4+(k/(N-1))*(w-8),Y=vv=>h-6-vv*(h-14);const g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,col+'40');g.addColorStop(1,col+'00');ctx.beginPath();ctx.moveTo(X(0),Y(pts[0]));for(let k=1;k<N;k++)ctx.lineTo(X(k),Y(pts[k]));ctx.lineTo(X(N-1),h);ctx.lineTo(X(0),h);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.beginPath();ctx.moveTo(X(0),Y(pts[0]));for(let k=1;k<N;k++)ctx.lineTo(X(k),Y(pts[k]));ctx.strokeStyle=col;ctx.lineWidth=1.6;ctx.stroke();ctx.fillStyle=col;ctx.beginPath();ctx.arc(X(N-1),Y(pts[N-1]),2.6,0,7);ctx.fill();const last=document.getElementById('tSparkLast');if(last)last.textContent='index '+Math.round(pts[N-1]*100);}
+(function(){const cb=document.getElementById('tChips');if(cb){TRACTS.forEach((t,i)=>{const b=document.createElement('button');b.className='tchip';b.textContent=t.st;b.onclick=()=>selTract(i);cb.appendChild(b);});}if(document.getElementById('tractCard'))selTract(0);
+if('IntersectionObserver' in window){const so=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)sparkTract(tSel,REG[TRACTS[tSel].r]);}),{threshold:.25});const mp=document.querySelector('#portfolio .map-panel');if(mp)so.observe(mp);}
+window.addEventListener('resize',()=>{try{sparkTract(tSel,REG[TRACTS[tSel].r]);}catch(e){}});})();
+
+/* ===== REASONING WINDOW ===== */
+const FAM=['','g','c','v']; const ENGN=[]; for(let i=0;i<90;i++)ENGN.push(FAM[(i*7)%4]);
+const OBJ=[
+ {id:'carbon',ic:'◷',name:'Timber value & growth',desc:'Stand growth, yield and product value made measurable, carbon derived.',
+  active:[3,7,12,19,24,33,41,55,62,71,88], cycle:'monthly', save:'−87%', cov:'0.90', comp:1280,
+  pipe:[['L1','Acquisition','Sentinel-2/Landsat, LiDAR inventory, growth plots, soil & climate ERA5','batch'],
+        ['L2','Feature Fabric','Biomass indices, growth/yield, canopy structure, allometrics','11 s'],
+        ['L3','11 engines','PINN biomass · GP growth · CNN canopy · allometric twin · LSTM phenology','26 s'],
+        ['L4','Meta-fusion','Robustness-weighted; uncertainty propagated end-to-end','4 s'],
+        ['L5','Decision Hub','Per-stand growth, value &amp; carbon with calibrated band + proof chain','5 s']],
+  out:'ML6, three Southern clusters share the same growth-pipeline fingerprint; their value and carbon estimates move together. Treat as one block for stand-value and registry reporting, not eleven independent stands.'},
+ {id:'risk',ic:'⚡',name:'Climate & fire risk',desc:'Early-warning across tracts, with lead time.',
+  active:[1,9,17,28,36,44,77], cycle:'daily', save:'−92%', cov:'0.90', comp:760,
+  pipe:[['L1','High-frequency stream','MODIS/VIIRS thermal, drought index, fuel moisture, wind','6 s'],
+        ['L2','Feature Fabric','Multi-scale water-stress, anomaly, fuel load, ignition proxy','7 s'],
+        ['L3','7 engines','GNN watershed · CNN fire-detection · drought PINN · LSTM weather · anomaly AE','18 s'],
+        ['L4','Meta-fusion','Latency-priority profile; accuracy held within ~1pp','3 s'],
+        ['L5','Decision Hub','Tract risk with stated lead time + explainable rationale','4 s']],
+  out:'ML7, drift detected on the fire-risk pipeline ahead of the dry season; the active subset is being re-composed and a successor model pre-warmed. Mean lead time on regime change: ~7–9 days.'},
+ {id:'returns',ic:'◆',name:'LP-return confidence',desc:'Risk-adjusted reporting an investment committee trusts.',
+  active:[4,11,22,30,38,46,58,66,74,82,84,89], cycle:'quarterly', save:'−84%', cov:'0.90', comp:2040,
+  pipe:[['L1','Portfolio acquisition','Inventory, market prices, harvest schedule, monetisation streams','batch'],
+        ['L2','Feature Fabric','Per-stand value drivers, cash-flow timing, 8 monetisation streams','22 min'],
+        ['L3','12 engines','Yield twin · price transformer · Bayesian scoring · scenario MC · GBoost','2.4 h'],
+        ['L4','Meta-fusion','Conservative profile; uncertainty explicit on every figure','14 min'],
+        ['L5','Decision Hub','Portfolio report with calibrated bands, Whole-Forest streams','18 min']],
+  out:'ML6, a newly acquired tract inherits the winning configuration from its 3 nearest fingerprint-neighbours: it starts at an illustrative warm-start score near 85% of the target baseline, not zero. Design cycles reduced >10×.'},
+ {id:'tnfd',ic:'⌑',name:'TNFD / Art.9 disclosure',desc:'Defensible nature reporting, compiled from proof.',
+  active:[3,7,12,24,33,41,55,62,71,88,46,58], cycle:'reporting', save:'−85%', cov:'0.90', comp:1860,
+  pipe:[['L1','Complete acquisition','Carbon, biodiversity, water, certification, conservation records','batch'],
+        ['L2','Feature Fabric','Historicised measures, LEAP locate/evaluate features, Art.9 indicators','24 min'],
+        ['L3','12 engines','Carbon measure · biodiversity index · habitat GNN · scenario · LLM drafter','2.1 h'],
+        ['L4','Meta-fusion','Maximum robustness; explicit uncertainty for filing','12 min'],
+        ['L5','Decision Hub','TNFD-LEAP + SFDR Art.9 package + filing signature','section 05']],
+  out:'Meta-Layer, every disclosed figure carries the engine subset that produced it and its conformal band: the report is defensible line by line, not a narrative. Generate it in section 05.'}
+];
+const grid=document.getElementById('engGrid'); const engEls=[];
+for(let i=0;i<90;i++){const d=document.createElement('div');d.className='eng';grid.appendChild(d);engEls.push(d);}
+const tabs=document.getElementById('objTabs');
+OBJ.forEach((o,i)=>{const b=document.createElement('button');b.className='obj'+(i===0?' sel':'');b.innerHTML=`<div class="ic">${o.ic}</div><h4>${o.name}</h4><p>${o.desc}</p>`;b.onclick=()=>setObj(i);tabs.appendChild(b);});
+const mnObj=document.getElementById("mnObj");if(mnObj){OBJ.forEach((o,i)=>{const b=document.createElement("button");b.className="mn-ob"+(i===0?" sel":"");b.innerHTML=o.ic+" "+o.name;b.onclick=()=>setObj(i);mnObj.appendChild(b);});}
+function aCount(el,t){const t0=performance.now(),from=parseFloat(el.dataset._v||0);const tk=tm=>{const p=Math.min(1,(tm-t0)/650),e=1-Math.pow(1-p,3),v=Math.round(from+(t-from)*e);el.textContent=v;if(p<1)requestAnimationFrame(tk);else el.dataset._v=t;};requestAnimationFrame(tk);}
+function setObj(i){const o=OBJ[i];
+  document.querySelectorAll('.obj').forEach((t,j)=>t.classList.toggle('sel',j===i));
+  document.querySelectorAll('.mn-ob').forEach((t,j)=>t.classList.toggle('sel',j===i));
+  const act=new Set(o.active);
+  engEls.forEach((e,j)=>{e.className='eng'+(act.has(j)?(' on '+(ENGN[j]||'')):'');});
+  aCount(document.getElementById('gActive'),o.active.length);
+  document.getElementById('mCycle').textContent=o.cycle;
+  document.getElementById('mSave').textContent=o.save;
+  document.getElementById('mCov').textContent=o.cov;
+  document.getElementById('autogen').innerHTML=`<b>L4-bis</b> evaluated <b>${o.comp.toLocaleString('en-US')}</b> valid pipeline compositions, scored each, and runs only the optimal subset, re-composed for this objective, not rewritten.`;
+  document.getElementById('pipeBody').innerHTML=o.pipe.map(p=>`<div class="pl"><span class="lv">${p[0]}</span><div class="px"><b>${p[1]}</b><span>${p[2]}</span></div></div>`).join('');
+  document.getElementById('rwOut').textContent=o.out;
+  if(window.mnSet) mnSet(o.id, o.name, o.active.length);
+}
+
+/* ===== META-NET (every node is a network) ===== */
+const MN_ENGINES=[
+ {n:'Growth & biomass',f:''},{n:'PINN biomass',f:'g'},{n:'GP growth / yield',f:'g'},{n:'Allometric twin',f:'g'},
+ {n:'CNN canopy structure',f:'g'},{n:'LSTM phenology',f:'g'},{n:'Spectral-ViT · NDVI/EVI',f:'g'},
+ {n:'GNN watershed',f:'c'},{n:'CNN fire-detection',f:'c'},{n:'Drought PINN',f:'c'},{n:'Anomaly autoencoder',f:'c'},{n:'Pest / insect detector',f:'c'},
+ {n:'Habitat GNN · biodiversity',f:'v'},{n:'Winged-species index',f:'v'},{n:'Land-use change CNN',f:'v'},{n:'Conservation scoring',f:'v'},
+ {n:'Price transformer · timber',f:''},{n:'Bayesian portfolio scoring',f:''},{n:'Scenario Monte Carlo',f:''},{n:'GBoost yield',f:''},
+ {n:'Drift detector · ML7',f:'v'},{n:'LLM disclosure drafter',f:''}
+];
+const MN_ACTIVE={ carbon:[0,1,2,3,4,5,6,16,17,18,21], risk:[0,7,8,9,10,11,21], returns:[0,2,16,17,18,19,12,13,14,15,20,21], tnfd:[0,1,12,13,15,16,17,18,20,21,7,9] };
+const MN_COL={g:'#3fae6a',c:'#4cc3d9',v:'#9b7fd4','':'#c9a23f'};
+const mnCanvas=document.getElementById('mnCanvas'), mnTip=document.getElementById('mnTip');
+let mnNodes=[],mnActiveSet=new Set(),mnParticles=[],mnHub=null,mnFuse=null,mnSources=[],mnHover=-1;
+function mnLayout(){ if(!mnCanvas)return; const W=mnCanvas.clientWidth,Ht=mnCanvas.clientHeight||340; let s=7;const rnd=()=>{s=(s*1103515245+12345)>>>0;return s/4294967296};
+  mnNodes=MN_ENGINES.map((e,i)=>{ const col=i%6,row=Math.floor(i/6); const x=W*0.15+col*(W*0.52/5)+(rnd()-.5)*W*0.04; const y=Ht*0.15+row*(Ht*0.72/3)+(rnd()-.5)*Ht*0.08;
+    const inner=[];const k=5+Math.floor(rnd()*3); for(let j=0;j<k;j++){const a=rnd()*6.283,r=4+rnd()*8;inner.push([Math.cos(a)*r,Math.sin(a)*r]);} return {x,y,e,inner,phase:rnd()*6.283}; });
+  mnFuse={x:W*0.80,y:Ht*0.5}; mnHub={x:W*0.92,y:Ht*0.5}; mnSources=[0.22,0.5,0.78].map(f=>({x:W*0.035,y:Ht*f})); }
+function mnSet(id,label,n){ mnActiveSet=new Set(MN_ACTIVE[id]||[]); mnParticles=[]; const l=document.getElementById('mnLabel'); if(l) l.innerHTML=label+' · <b>'+n+'</b> engines composed'; }
+window.mnSet=mnSet;
+function mnSpawn(){ if(mnActiveSet.size===0)return; const act=[...mnActiveSet]; if(mnParticles.length<26&&Math.random()<0.5){ const target=mnNodes[act[Math.floor(Math.random()*act.length)]]; const src=mnSources[Math.floor(Math.random()*mnSources.length)]; mnParticles.push({seg:0,t:0,path:[src,target,mnFuse,mnHub],col:MN_COL[target.e.f]}); } }
+function mnDraw(){ if(!mnCanvas)return; const dpr=window.devicePixelRatio||1; const W=mnCanvas.clientWidth,Ht=mnCanvas.clientHeight||340; if(mnCanvas.width!==W*dpr){mnCanvas.width=W*dpr;mnCanvas.height=Ht*dpr;} const ctx=mnCanvas.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,Ht); const t=performance.now()/1000;
+  ctx.lineWidth=1;
+  mnNodes.forEach((nd,i)=>{ const on=mnActiveSet.has(i); const src=mnSources[i%3]; ctx.strokeStyle=on?'rgba(201,162,63,.26)':'rgba(255,255,255,.04)'; ctx.beginPath();ctx.moveTo(src.x,src.y);ctx.lineTo(nd.x,nd.y);ctx.stroke(); ctx.beginPath();ctx.moveTo(nd.x,nd.y);ctx.lineTo(mnFuse.x,mnFuse.y);ctx.strokeStyle=on?'rgba(201,162,63,.32)':'rgba(255,255,255,.04)';ctx.stroke(); });
+  ctx.strokeStyle='rgba(201,162,63,.6)';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(mnFuse.x,mnFuse.y);ctx.lineTo(mnHub.x,mnHub.y);ctx.stroke();
+  mnSources.forEach(sc=>{ctx.fillStyle='rgba(255,255,255,.35)';ctx.beginPath();ctx.arc(sc.x,sc.y,3,0,7);ctx.fill();});
+  ctx.fillStyle='rgba(255,255,255,.45)';ctx.font='9.5px -apple-system';ctx.textAlign='left';ctx.fillText('DATA · L1',mnSources[0].x-2,mnSources[0].y-14);
+  mnNodes.forEach((nd,i)=>{ const on=mnActiveSet.has(i),col=MN_COL[nd.e.f],R=on?16+Math.sin(t*2+nd.phase)*1.4:12;
+    if(on){const g=ctx.createRadialGradient(nd.x,nd.y,2,nd.x,nd.y,R*2.4);g.addColorStop(0,col+'55');g.addColorStop(1,col+'00');ctx.fillStyle=g;ctx.beginPath();ctx.arc(nd.x,nd.y,R*2.4,0,7);ctx.fill();}
+    ctx.strokeStyle=on?col:'rgba(255,255,255,.16)';ctx.lineWidth=on?1.6:1;ctx.fillStyle=on?'rgba(8,12,14,.92)':'rgba(255,255,255,.025)';ctx.beginPath();ctx.arc(nd.x,nd.y,R,0,7);ctx.fill();ctx.stroke();
+    const sx=on?1.1:0.8;ctx.strokeStyle=on?col+'88':'rgba(255,255,255,.10)';ctx.lineWidth=.7;
+    for(let a=0;a<nd.inner.length;a++){const pa=nd.inner[a],pb=nd.inner[(a+1)%nd.inner.length],pc=nd.inner[(a+2)%nd.inner.length];ctx.beginPath();ctx.moveTo(nd.x+pa[0]*sx,nd.y+pa[1]*sx);ctx.lineTo(nd.x+pb[0]*sx,nd.y+pb[1]*sx);ctx.stroke(); if(a%2===0){ctx.beginPath();ctx.moveTo(nd.x+pa[0]*sx,nd.y+pa[1]*sx);ctx.lineTo(nd.x+pc[0]*sx,nd.y+pc[1]*sx);ctx.stroke();}}
+    ctx.fillStyle=on?col:'rgba(255,255,255,.28)';for(const p of nd.inner){ctx.beginPath();ctx.arc(nd.x+p[0]*sx,nd.y+p[1]*sx,on?1.5:1,0,7);ctx.fill();}
+    if(i===mnHover){ctx.strokeStyle='#fff';ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(nd.x,nd.y,R+4,0,7);ctx.stroke();} });
+  ctx.save();ctx.translate(mnFuse.x,mnFuse.y);ctx.rotate(t*0.5);ctx.strokeStyle='rgba(201,162,63,.9)';ctx.lineWidth=1.4;ctx.strokeRect(-9,-9,18,18);ctx.rotate(Math.PI/4);ctx.strokeStyle='rgba(201,162,63,.45)';ctx.strokeRect(-9,-9,18,18);ctx.restore();
+  ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='9.5px -apple-system';ctx.textAlign='center';ctx.fillText('META-FUSION · L4',mnFuse.x,mnFuse.y+30);
+  const hr=14+Math.sin(t*1.6)*1.2;const hg=ctx.createRadialGradient(mnHub.x,mnHub.y,2,mnHub.x,mnHub.y,hr*2.6);hg.addColorStop(0,'rgba(63,174,106,.5)');hg.addColorStop(1,'rgba(63,174,106,0)');ctx.fillStyle=hg;ctx.beginPath();ctx.arc(mnHub.x,mnHub.y,hr*2.6,0,7);ctx.fill();
+  ctx.fillStyle='#3fae6a';ctx.beginPath();for(let a=0;a<6;a++){const ang=a*Math.PI/3-Math.PI/6;a?ctx.lineTo(mnHub.x+Math.cos(ang)*hr,mnHub.y+Math.sin(ang)*hr):ctx.moveTo(mnHub.x+Math.cos(ang)*hr,mnHub.y+Math.sin(ang)*hr);}ctx.closePath();ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.6)';ctx.fillText('DECISION',mnHub.x,mnHub.y+32);ctx.fillText('HUB · L5',mnHub.x,mnHub.y+44);
+  mnSpawn();
+  mnParticles=mnParticles.filter(p=>{p.t+=0.016;if(p.t>=1){p.seg++;p.t=0;if(p.seg>=p.path.length-1)return false;}const A=p.path[p.seg],B=p.path[p.seg+1];const e=p.t*p.t*(3-2*p.t);const x=A.x+(B.x-A.x)*e,y=A.y+(B.y-A.y)*e;ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(x,y,2.1,0,7);ctx.fill();ctx.fillStyle=p.col+'44';ctx.beginPath();ctx.arc(x,y,4.5,0,7);ctx.fill();return true;});
+  requestAnimationFrame(mnDraw);
+}
+if(mnCanvas){
+  mnCanvas.addEventListener('mousemove',ev=>{const r=mnCanvas.getBoundingClientRect();const x=ev.clientX-r.left,y=ev.clientY-r.top;mnHover=-1;for(let i=0;i<mnNodes.length;i++){const nd=mnNodes[i];if((nd.x-x)**2+(nd.y-y)**2<360){mnHover=i;break;}}
+   if(mnHover>=0){const nd=mnNodes[mnHover],on=mnActiveSet.has(mnHover);mnTip.style.display='block';mnTip.style.left=(nd.x+24)+'px';mnTip.style.top=(nd.y+30)+'px';mnTip.innerHTML=nd.e.n+'<span>'+(on?'active · selected by gating':'in stand-by · below E(Mᵢ) threshold')+'</span>';}else mnTip.style.display='none';});
+  mnCanvas.addEventListener('mouseleave',()=>{mnHover=-1;mnTip.style.display='none';});
+  mnLayout(); requestAnimationFrame(mnDraw); window.addEventListener('resize',mnLayout);
+}
+
+/* ===== META-LAYER CARDS ===== */
+const MI=[
+ {tag:'ML6 · fingerprint',h:'Hidden concentration risk',
+  p:'Three tracts in different states, Georgia, Alabama, Mississippi, share the same winning pipeline fingerprint: the identical small set of models wins on all three. The Meta-Layer flags them as a correlated cluster. A single drought event would hit them together. No tract-level model sees this; the structure of which models win does.',
+  src:'Produced by: <b>11-engine growth subset</b> · fingerprint Jaccard 0.91 across the three',c:88,key:'concentration'},
+ {tag:'ML7 · meta-pattern',h:'It predicts its own drift',
+  p:'The optimal pipeline for stand-growth estimation is drifting: within ~9 days the current best model will be outperformed by a regime change in growth signal. The system pre-warms its successor and re-composes before accuracy degrades, the intelligence anticipates its own obsolescence, and logs it.',
+  src:'Produced by: <b>ML7 motif discovery</b> · mean lead time ≥ 7 days · drift trigger logged',c:84,key:'drift'},
+ {tag:'ML6 · transfer',h:'New acres start smart',
+  p:'A newly acquired tract inherits the winning configuration from its three nearest fingerprint-neighbours by cosine similarity. It starts at an illustrative warm-start score near 85% of the target orchestration baseline instead of from zero, design cycles reduced more than tenfold. Intelligence transfers across the portfolio; each new acquisition is measured at a fraction of the cost.',
+  src:'Produced by: <b>cross-asset warm-start</b> · hit-rate ≥ 0.85 · onboarding 10× faster',c:90,key:'transfer'}
+];
+const miG=document.getElementById('miGrid');
+miG.innerHTML=MI.map((m,i)=>`<div class="mi"><span class="tag">${m.tag}</span><h3>${m.h}</h3><p>${m.p}</p>
+  <div class="src">${m.src}</div>
+  <div class="conf"><span class="c"><b>${m.c}%</b> confidence</span></div>
+  <button class="proof-btn" onclick="openProof('${m.key}','${m.h.replace(/'/g,"")}',${m.c})">⛓ Proof chain</button></div>`).join('');
+
+/* ===== PROOF MODAL ===== */
+function openProof(key,title,conf){const now=new Date();const ts=mn=>new Date(now-mn*60000).toISOString().replace('T',' ').slice(0,19)+' UTC';
+  const steps=[
+   {l:'L1 · DATA',h:'Acquisition & harmonisation',kv:[['sources','Sentinel-2/Landsat · LiDAR inventory · growth plots'],['timestamp',ts(44)],['data model','common spatio-temporal · single source of truth'],['hash','sha256:'+H(key+'L1')]]},
+   {l:'L2 · DESCRIPTOR',h:'Features & indices',kv:[['features','biomass indices · growth/yield · canopy structure'],['version','feature-fabric v1.4 · contract TIR-02'],['hash','sha256:'+H(key+'L2')]]},
+   {l:'L3 · ENGINES',h:'Selected subset executed',kv:[['active','PINN biomass · GP growth · CNN canopy · …'],['catalogue','~90 · ~11 ignited by gating'],['saving','−87% compute vs run-everything'],['hash','sha256:'+H(key+'L3')]]},
+   {l:'L4 · FUSION',h:'Meta-fusion & calibration',kv:[['gating','α·Acc − β·Lat − γ·En + δ·Rob'],['band','conditional conformal · coverage 0.90'],['confidence',conf+'%'],['hash','sha256:'+H(key+'L4')]]},
+   {l:'L5 · DECISION',h:title,kv:[['orchestration','ML6/ML7 meta-layer indication'],['filing signature','sha256:'+(()=>{let p='genesis';for(const k of['L1','L2','L3','L4','L5'])p=SHA256(p+key+k).slice(0,16);return p;})()]]}
+  ];
+  document.getElementById('pmSub').innerHTML='Meta-Layer indication «'+title+'» · confidence '+conf+'% · every step hashed and chained.';
+  document.getElementById('pmChain').innerHTML=steps.map(s=>`<div class="cstep"><div class="cl">${s.l}</div><h5>${s.h}</h5><div class="kv">${s.kv.map(([k,v])=>`<div class="k">${k}</div><div class="v">${v}</div>`).join('')}</div></div>`).join('');
+  document.getElementById('proofModal').classList.add('open');
+}
+function closeProof(){document.getElementById('proofModal').classList.remove('open');}
+document.getElementById('proofModal').addEventListener('click',e=>{if(e.target.id==='proofModal')closeProof();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeProof();});
+
+/* ===== DISCLOSURE GENERATOR ===== */
+const LEAP=[
+ {n:'L · Locate',h:'Interface with nature',p:'841k acres across 15 states located against priority biomes and watersheds; 3,100 mi of streams under BMPs.'},
+ {n:'E · Evaluate',h:'Dependencies & impacts',p:'Carbon stock 72.7M tCO₂e (reported portfolio stock; a pilot would measure per stand); winged-species habitat index; <1% wildfire / <1% insect exposure.'},
+ {n:'A · Assess',h:'Risks & opportunities',p:'Concentration risk surfaced by fingerprint; drift-watched; 8 Whole-Forest monetisation streams assessed.'},
+ {n:'P · Prepare',h:'Respond & disclose',p:'SFDR Article 9 indicators + TNFD metrics compiled; each figure carries its engine subset and conformal band.'}
+];
+document.getElementById('leap').innerHTML=LEAP.map(s=>`<div class="leap-step"><div class="ln">${s.n}</div><h5>${s.h}</h5><p>${s.p}</p><div class="h"></div></div>`).join('');
+function generateDisclosure(){
+  const steps=[...document.querySelectorAll('.leap-step')];
+  steps.forEach((el,i)=>setTimeout(()=>{el.classList.add('on');el.querySelector('.h').textContent='sha256:'+H('LEAP'+i+Date.now());},i*420));
+  setTimeout(()=>{const sig=document.getElementById('genSig');sig.classList.add('on');
+    let p='genesis';['L','E','A','P'].forEach(k=>p=SHA256(p+k).slice(0,16));
+    sig.innerHTML=`<b>Disclosure compiled.</b> TNFD-LEAP + SFDR Article 9 package assembled from the proof chain, every metric traceable to raw data, with calibrated uncertainty. <br>Filing signature: <span class="h">sha256:${SHA256(p+'TIR-Fund2-Art9').slice(0,48)}</span> · tamper-evident, timestamp-ready. <span class="bdg sim">simulated from origin</span>`;
+  },steps.length*420+200);
+  document.getElementById('genBtn').textContent='✓ Generated';
+}
+
+/* ===== INIT + REVEAL ===== */
+selTract(0); setObj(0);
+const ro=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');ro.unobserve(e.target);}}),{threshold:0,rootMargin:"0px 0px 120px 0px"});
+
+document.querySelectorAll('.rv').forEach(el=>ro.observe(el));
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(drawUS,180);});
+</script>
+<script>
+(function(){
+  const cv=document.getElementById('brain'); if(!cv) return;
+  const ctx=cv.getContext('2d');
+  // 7 distinct colours: L1..L5 (cool, inner brain) + ML6/ML7 (warm, galaxy)
+  const LAYC=[[63,174,106],[54,184,176],[63,160,216],[100,128,224],[150,121,222]];
+  const METAC=[[201,162,63],[224,96,143]];
+  const mix=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];
+  const rgba=(c,a)=>`rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`;
+  const ease=t=>t<0?0:t>1?1:t*t*(3-2*t);
+  const rand=Math.random;
+  let W=0,H=0,DPR=1,CX=0,CY=0,R=200,FOCAL=900;
+  let inner=[],meta=[],dorm=[],iedges=[],packets=[],t0=performance.now(),lastGate=-999,lastMGate=-999,lastHover=-2;
+  let ax=-0.28,ay=0.3,autov=0.0012,dragging=false,lastX=0,lastY=0,vA=0,vE=0,mx=-1e4,my=-1e4,hover=-1,hSet='',eng=0;
+
+  function uvec(){let u=rand()*2-1,th=rand()*6.2832,s=Math.sqrt(1-u*u);return [s*Math.cos(th),u,s*Math.sin(th)];}
+  function satellites(){ // a tiny network, itself dynamic (spin + per-node pulse)
+    const k=4+(rand()*3|0),pts=[];
+    for(let i=0;i<k;i++){const d=uvec();const rr=.5+rand()*.55;pts.push({d:[d[0]*rr,d[1]*rr,d[2]*rr],ph:rand()*6.2832,sp:.6+rand()*1.3});}
+    const ln=[];for(let i=0;i<k;i++)ln.push([i,(i+1)%k]); if(k>3)ln.push([0,k>>1]);
+    return {pts,ln,spin:[(rand()-.5)*0.9,(rand()-.5)*0.9]};
+  }
+  const BAND=[0.20,0.34,0.49,0.65,0.82], NPL=[30,44,56,68,82]; // compact inner ball, dense neurons/synapses
+  const RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const SC=(window.innerWidth<760||RM)?0.5:1; // lighten on phones / reduced-motion
+  function build(){
+    inner=[];meta=[];dorm=[];iedges=[];
+    for(let s=0;s<5;s++){const ns=Math.round(NPL[s]*SC);for(let i=0;i<ns;i++){const d=uvec();
+      inner.push({d,r:BAND[s]+(rand()-.5)*0.075,layer:s,col:LAYC[s],lit:1,litT:1,sat:satellites(),ph:rand()*6.2832,label:(i===0?(['Inventory','Growth','Product','Value','Proof'][s]):null)});}}
+    // dormant substrate: many faint neurons through the volume, lit only rarely
+    const ND=Math.round(470*SC);for(let i=0;i<ND;i++){const d=uvec(),s=rand()*5|0;
+      dorm.push({d,r:0.13+rand()*0.94,col:LAYC[s],lit:0,litT:0,sat:satellites(),ph:rand()*6.2832});}
+    const P=inner.map(n=>[n.d[0]*n.r,n.d[1]*n.r,n.d[2]*n.r]),seen=new Set();
+    for(let i=0;i<inner.length;i++){const d=[];
+      for(let j=0;j<inner.length;j++){if(i===j)continue;const dx=P[i][0]-P[j][0],dy=P[i][1]-P[j][1],dz=P[i][2]-P[j][2];d.push([dx*dx+dy*dy+dz*dz,j]);}
+      d.sort((a,b)=>a[0]-b[0]);for(let k=0;k<3;k++){const j=d[k][1],key=i<j?i+'_'+j:j+'_'+i;if(seen.has(key))continue;seen.add(key);iedges.push([i,j]);}}
+    const MN=Math.round(96*SC); for(let i=0;i<MN;i++){const ml=i%2,rm=1.10+rand()*0.62;
+      meta.push({ml,col:METAC[ml],rM:rm,th:rand()*6.2832,om:0.10+0.5/rm,lit:1,litT:1,
+        off:(rand()-.5)*0.62,tilt:0.5+(rand()-.5)*0.6,birth:1.0+rand()*4.4,sat:satellites(),ph:rand()*6.2832,
+        label:(i===0?'Portfolio':(i===1?'Risk':null))});}
+  }
+  function gate(seedIdx){
+    lastGate=(performance.now()-t0)/1000;
+    for(const n of inner)n.litT=0;
+    const seeds=[]; if(seedIdx>=0&&seedIdx<inner.length)seeds.push(seedIdx);
+    const ns=4+(rand()*3|0); for(let s=0;s<ns;s++)seeds.push(rand()*inner.length|0);
+    for(const si of seeds){inner[si].litT=1;for(const e of iedges){if(e[0]===si)inner[e[1]].litT=1;else if(e[1]===si)inner[e[0]].litT=1;}}
+    let c=0;for(const n of inner)c+=n.litT; let need=Math.floor(inner.length*0.34)-c;
+    while(need-->0)inner[rand()*inner.length|0].litT=1;
+  }
+  function resize(){
+    DPR=Math.min(window.devicePixelRatio||1,2);
+    W=cv.clientWidth;H=cv.clientHeight||window.innerHeight;
+    cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
+    CX=W>900?W*0.58:W*0.5;CY=H*0.46;R=Math.min(W*0.34,H*0.44);FOCAL=R*4.6;
+  }
+  function rot(p){const cy=Math.cos(ay),sy=Math.sin(ay),cx=Math.cos(ax),sx=Math.sin(ax);
+    let x=p[0]*cy-p[2]*sy,z=p[0]*sy+p[2]*cy,y=p[1];return [x,y*cx-z*sx,y*sx+z*cx];}
+  function project(p){const pr=rot(p);const sc=FOCAL/(FOCAL+pr[2]);return {sx:CX+pr[0]*sc,sy:CY+pr[1]*sc,sc,z:pr[2]};}
+
+  function frame(now){
+    const t=(now-t0)/1000;
+    if(!dragging){ay+=(RM?0:autov)+vA;ax+=vE;vA*=0.93;vE*=0.93;}
+    eng+=((mx>-9999?1:0)-eng)*0.05;
+    if(t>2.2 && t-lastGate>2.6 && hover<0) gate(-1);
+    for(const n of inner){if(t<2.0)n.litT=1;n.lit+=(n.litT-n.lit)*0.06;}
+    for(const n of dorm){if(rand()<0.0010)n.litT=0.45+rand()*0.35;n.litT*=0.95;n.lit+=(n.litT-n.lit)*0.12;}
+    if(t>2.5&&t-lastMGate>1.6){lastMGate=t;for(const n of meta)n.litT=rand()<0.55?1:0.18;}
+    for(const n of meta){if(rand()<0.016)n.litT=rand()<0.5?1:0.2;n.lit+=(n.litT-n.lit)*0.1;}
+
+    ctx.clearRect(0,0,W,H);
+    ctx.globalCompositeOperation='lighter';
+
+    const ip=inner.map(n=>{const rr=n.r*R*(0.97+0.03*Math.sin(t*0.6+n.ph));return project([n.d[0]*rr,n.d[1]*rr,n.d[2]*rr]);});
+    const mp=meta.map(n=>{const bp=ease((t-n.birth)/3.0);const rr=(0.5+(n.rM-0.5)*bp)*R;
+      const a=n.th+t*n.om,ct=Math.cos(n.tilt),st=Math.sin(n.tilt);
+      let bx=Math.cos(a)*rr,by=n.off*R,bz=Math.sin(a)*rr;
+      const pj=project([bx,by*ct-bz*st,by*st+bz*ct]);pj.bp=bp;return pj;});
+    // dormant substrate (dense, faint), ignites densely under the cursor
+    const dp=dorm.map(n=>{const rr=n.r*R;return project([n.d[0]*rr,n.d[1]*rr,n.d[2]*rr]);});
+    const cf=R*0.24;
+    for(let i=0;i<dorm.length;i++){const n=dorm[i],p=dp[i];const dN=Math.max(0,Math.min(1,(p.sc-0.6)/1.1));
+      let el=n.lit;
+      if(mx>-9999){const cdx=p.sx-mx,cdy=p.sy-my,cd2=cdx*cdx+cdy*cdy;if(cd2<cf*cf){const pr=1-Math.sqrt(cd2)/cf;el=Math.max(el,pr*0.72);}}
+      const core=p.sc*(0.6+el*el*3.0);
+      if(el>0.12){const g=ctx.createRadialGradient(p.sx,p.sy,0,p.sx,p.sy,core*3.4);g.addColorStop(0,rgba(n.col,Math.min(0.5*el,0.6)));g.addColorStop(1,rgba(n.col,0));ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.sx,p.sy,core*3.4,0,6.2832);ctx.fill();}
+      if(el>0.4&&p.sc>0.6){const ir=core*2.5,sp=n.sat;
+        const pts=sp.pts.map(q=>{const aa=t*sp.spin[0],bb=t*sp.spin[1];let x=q.d[0],y=q.d[1],z=q.d[2];let x1=x*Math.cos(aa)-z*Math.sin(aa),z1=x*Math.sin(aa)+z*Math.cos(aa);let y1=y*Math.cos(bb)-z1*Math.sin(bb),z2=y*Math.sin(bb)+z1*Math.cos(bb);const m=rot([x1,y1,z2]);return {x:p.sx+m[0]*ir,y:p.sy+m[1]*ir};});
+        ctx.strokeStyle=rgba(n.col,0.5*el);ctx.lineWidth=0.7;
+        for(const e2 of sp.ln){ctx.beginPath();ctx.moveTo(pts[e2[0]].x,pts[e2[0]].y);ctx.lineTo(pts[e2[1]].x,pts[e2[1]].y);ctx.stroke();}
+        ctx.fillStyle=rgba(n.col,0.85*el);for(const q of pts){ctx.beginPath();ctx.arc(q.x,q.y,1.1,0,6.2832);ctx.fill();}}
+      ctx.fillStyle=rgba(n.col,(0.05+0.08*dN)+0.7*el);ctx.beginPath();ctx.arc(p.sx,p.sy,core,0,6.2832);ctx.fill();}
+
+    // hover (recomposes the lit set when entering a new inner node)
+    hover=-1;hSet='';let best=20*20;
+    for(let i=0;i<inner.length;i++){const p=ip[i],dx=p.sx-mx,dy=p.sy-my,d=dx*dx+dy*dy;if(d<best){best=d;hover=i;hSet='i';}}
+    for(let i=0;i<meta.length;i++){if(mp[i].bp<0.3)continue;const p=mp[i],dx=p.sx-mx,dy=p.sy-my,d=dx*dx+dy*dy;if(d<best){best=d;hover=i;hSet='m';}}
+    if(hSet==='i'){ if(hover!==lastHover){lastHover=hover;gate(hover);} } else lastHover=-2;
+
+    // synapse edges (more visible)
+    for(const e of iedges){const a=ip[e[0]],b=ip[e[1]],li=Math.max(inner[e[0]].lit,inner[e[1]].lit);
+      const al=0.06+li*0.2;if(al<0.035)continue;const dep=Math.max(0,(a.sc+b.sc)/2-0.7);
+      ctx.strokeStyle=rgba(mix(inner[e[0]].col,inner[e[1]].col,0.5),al*(0.5+0.5*dep));ctx.lineWidth=0.75;
+      ctx.beginPath();ctx.moveTo(a.sx,a.sy);ctx.lineTo(b.sx,b.sy);ctx.stroke();}
+    // information packets travelling through the synapses (along active assemblies)
+    if(packets.length<120){for(let s=0;s<6;s++){const ei=rand()*iedges.length|0,e=iedges[ei];
+      if(Math.max(inner[e[0]].lit,inner[e[1]].lit)>0.4&&rand()<0.5)packets.push({ei,t:0,spd:0.022+rand()*0.032,dir:rand()<0.5});}}
+    packets=packets.filter(pk=>{pk.t+=pk.spd;if(pk.t>=1)return false;const e=iedges[pk.ei];let a=ip[e[0]],b=ip[e[1]];if(pk.dir){const tm=a;a=b;b=tm;}
+      const ee=pk.t*pk.t*(3-2*pk.t),x=a.sx+(b.sx-a.sx)*ee,y=a.sy+(b.sy-a.sy)*ee,c=mix(inner[e[0]].col,inner[e[1]].col,0.5);
+      ctx.fillStyle=rgba(c,0.32);ctx.beginPath();ctx.arc(x,y,3.4,0,6.2832);ctx.fill();
+      ctx.fillStyle=rgba(mix(c,[255,255,255],0.4),0.95);ctx.beginPath();ctx.arc(x,y,1.7,0,6.2832);ctx.fill();return true;});
+    // meta filaments (galaxy threads + binding to the ball)
+    for(let i=0;i<meta.length;i++){const p=mp[i];if(p.bp<0.05)continue;const q=ip[(i*7)%inner.length];
+      ctx.strokeStyle=rgba(meta[i].col,0.06*p.bp);ctx.lineWidth=0.5;ctx.beginPath();ctx.moveTo(p.sx,p.sy);ctx.lineTo(q.sx,q.sy);ctx.stroke();
+      const r2=mp[(i+2)%meta.length];if(r2.bp>0.05){ctx.strokeStyle=rgba(meta[i].col,0.05*p.bp);ctx.beginPath();ctx.moveTo(p.sx,p.sy);ctx.lineTo(r2.sx,r2.sy);ctx.stroke();}}
+
+    drawSet(inner,ip,t,false);
+    drawSet(meta,mp,t,true);
+
+    ctx.globalCompositeOperation='source-over';
+    if(hover>=0){const arr=hSet==='i'?inner:meta,p=(hSet==='i'?ip:mp)[hover],n=arr[hover];
+      const name=hSet==='m'?(n.ml?'Risk · drift & markets':'Portfolio · cross-stand'):(['Inventory','Growth','Product','Value','Proof'][n.layer]+' · layer');
+      const sub=hSet==='m'?'emergent meta-layer · binds across stands':'a specialist that is itself a network of signals';
+      ctx.font='600 12px -apple-system';const w=Math.max(ctx.measureText(name).width,ctx.measureText(sub).width)+20;
+      let bx=p.sx+14,by=p.sy-14;if(bx+w>W)bx=p.sx-14-w;
+      ctx.fillStyle='rgba(8,11,17,.95)';ctx.strokeStyle='rgba(255,255,255,.16)';ctx.beginPath();ctx.roundRect(bx,by-30,w,42,8);ctx.fill();ctx.stroke();
+      ctx.fillStyle='#eef1ef';ctx.fillText(name,bx+10,by-12);ctx.fillStyle='#7c8682';ctx.font='11px -apple-system';ctx.fillText(sub,bx+10,by+3);}
+    requestAnimationFrame(frame);
+  }
+
+  function drawSet(arr,pp,t,isMeta){
+    const order=[...Array(arr.length).keys()].sort((i,j)=>pp[j].z-pp[i].z);
+    for(const i of order){const n=arr[i],p=pp[i];const born=isMeta?p.bp:1;if(born<=0.02)continue;
+      let lit=isMeta?born*(0.18+0.82*n.lit):(0.16+0.84*n.lit);
+      if(mx>-9999){const cdx=p.sx-mx,cdy=p.sy-my,cd=Math.sqrt(cdx*cdx+cdy*cdy),field=isMeta?R*0.46:R*0.52;if(cd<field){const pr=1-cd/field;lit=isMeta?Math.min(1,lit+pr*pr*0.55*eng):Math.max(lit,pr*pr*0.97);}}
+      if(isMeta)lit=Math.min(1,lit+eng*0.14);
+      const isH=(hover===i)&&((isMeta&&hSet==='m')||(!isMeta&&hSet==='i'));
+      const dN=Math.max(0,Math.min(1,(p.sc-0.6)/1.1));
+      const sz=(isMeta?2.15:1.15+n.layer*0.17)*p.sc;
+      const rad=sz*(0.6+0.6*lit)*(isH?1.7:1);
+      const bright=lit*(0.4+0.6*dN)*(isH?1.7:1);
+      if(lit>0.18||isH){const g=ctx.createRadialGradient(p.sx,p.sy,0,p.sx,p.sy,rad*3.2);
+        g.addColorStop(0,rgba(n.col,Math.min(0.48*bright,0.55)));g.addColorStop(1,rgba(n.col,0));
+        ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.sx,p.sy,rad*3.2,0,6.2832);ctx.fill();}
+      if((lit>0.5||isH)&&p.sc>0.82){const ir=rad*(isH?3.4:2.2),sp=n.sat;
+        const pts=sp.pts.map(q=>{const aa=t*sp.spin[0],bb=t*sp.spin[1];
+          let x=q.d[0],y=q.d[1],z=q.d[2];
+          let x1=x*Math.cos(aa)-z*Math.sin(aa),z1=x*Math.sin(aa)+z*Math.cos(aa);
+          let y1=y*Math.cos(bb)-z1*Math.sin(bb),z2=y*Math.sin(bb)+z1*Math.cos(bb);
+          const m=rot([x1,y1,z2]);return {x:p.sx+m[0]*ir,y:p.sy+m[1]*ir,on:0.5+0.5*Math.sin(t*q.sp*1.8+q.ph)};});
+        ctx.strokeStyle=rgba(n.col,(isH?0.6:0.24)*lit);ctx.lineWidth=isH?0.9:0.5;
+        for(const [a,b] of sp.ln){ctx.beginPath();ctx.moveTo(pts[a].x,pts[a].y);ctx.lineTo(pts[b].x,pts[b].y);ctx.stroke();}
+        for(const q of pts){ctx.fillStyle=rgba(n.col,(0.3+0.65*q.on)*lit*(isH?1.4:1));ctx.beginPath();ctx.arc(q.x,q.y,(isH?1.5:1)*(0.6+q.on*0.55),0,6.2832);ctx.fill();}}
+      ctx.fillStyle=rgba(mix(n.col,[255,255,255],isH?0.4:0.14),Math.min(bright,1));
+      ctx.beginPath();ctx.arc(p.sx,p.sy,rad*(isH?0.9:0.6),0,6.2832);ctx.fill();
+      if(n.label&&lit>0.4){ctx.globalCompositeOperation='source-over';
+        ctx.fillStyle=rgba(mix(n.col,[255,255,255],0.5),0.5*lit);ctx.font='600 11px -apple-system';
+        ctx.fillText(n.label,p.sx+rad+5,p.sy-rad-3);ctx.globalCompositeOperation='lighter';}
+    }
+  }
+
+  cv.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;vA=vE=0;cv.setPointerCapture(e.pointerId);});
+  cv.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect();mx=e.clientX-r.left;my=e.clientY-r.top;
+    if(dragging){const dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;
+      ay+=dx*0.006;ax+=dy*0.006;ax=Math.max(-1.3,Math.min(1.3,ax));vA=dx*0.0005;vE=dy*0.0005;}});
+  window.addEventListener('pointerup',()=>{dragging=false;});
+  cv.addEventListener('pointerleave',()=>{mx=my=-1e4;});
+  if(!CanvasRenderingContext2D.prototype.roundRect){CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){this.beginPath();this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();return this;};}
+  window.addEventListener('resize',resize);
+  resize(); build(); requestAnimationFrame(frame);
+})();
+</script>
+<script>(function(){document.querySelectorAll("#problem .q").forEach(function(c){c.setAttribute("tabindex","0");c.setAttribute("role","button");c.setAttribute("aria-expanded","false");function t(){var o=c.classList.toggle("open");c.setAttribute("aria-expanded",o?"true":"false");}c.addEventListener("click",t);c.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();t();}});});})();</script>
+<script>(function(){var o=window.generateDisclosure;if(o)window.generateDisclosure=function(){o.apply(this,arguments);var w=document.querySelector(".gen-wrap");if(w)w.classList.add("done");};})();</script>
+<script>
+const SCEN=[
+ {ic:'\u2261',name:'Baseline',rec:'Hold and grow. Thin the mid-maturity stands; no harvest advanced.',conf:0.91,driver:'stand growth on trend',metric:'value +0%'},
+ {ic:'\u2600',name:'Drought year',rec:'Delay two southern harvests one season; growth signal below the band.',conf:0.88,driver:'water stress, NDWI down',metric:'value \u22123%'},
+ {ic:'\u26a1',name:'Fire-risk season',rec:'Hedge fire exposure on two tracts; pre-position salvage capacity.',conf:0.90,driver:'fuel moisture, thermal anomaly',metric:'lead-time 5\u20137 wk'},
+ {ic:'\u2197',name:'Strong sawtimber market',rec:'Accelerate the mature sawtimber cut; shift the product mix from pulp.',conf:0.89,driver:'sawtimber price regime',metric:'value +6%'},
+ {ic:'\u2726',name:'Pest pressure',rec:'Prioritise monitoring on three stands; stage an early intervention.',conf:0.87,driver:'insect exposure rising',metric:'lead-time 3\u20134 wk'}
+];
+(function(){const box=document.getElementById('simScen');if(!box)return;SCEN.forEach((sc,i)=>{const b=document.createElement('button');b.className='sim-chip';b.innerHTML='<span class="sc-ic">'+sc.ic+'</span> '+sc.name;b.onclick=()=>simSel(i);box.appendChild(b);});simSel(0);})();
+function simSel(i){const sc=SCEN[i];document.querySelectorAll('.sim-chip').forEach((c,j)=>c.classList.toggle('sel',j===i));
+ document.getElementById('simOut').innerHTML='<div class="so-lbl">Governed recommendation</div><p class="so-rec">'+sc.rec+'</p>'+
+ '<div class="so-metrics"><div class="som"><div class="sv gr">'+(sc.conf*100).toFixed(0)+'%</div><div class="sk">conformal coverage</div></div>'+
+ '<div class="som"><div class="sv">'+sc.metric+'</div><div class="sk">effect</div></div>'+
+ '<div class="som"><div class="sv cy">recomposed</div><div class="sk">pipeline</div></div></div>'+
+ '<div class="so-driver">Ignited by: <b>'+sc.driver+'</b>. One engine, a different forest, governed the same way. <span class="bdg sim">simulated from origin</span></div>';}
+</script>
+</body>
+</html>
